@@ -66,45 +66,45 @@ Automated Action (Review Request / Escalation Alert / Empathy Message)
 
 ```mermaid
 flowchart TD
-    subgraph CLINIC["🏥 Clinic (Google Sheets DB)"]
-        GS[("📋 Google Sheets\nPatients · Queue · Logs")]
+    subgraph CLINIC[Clinic - Google Sheets DB]
+        GS[(Google Sheets\nPatients · Queue · Logs)]
     end
 
-    subgraph SCHEDULER["⏰ WF1a — Daily Scheduler (9AM IST)"]
-        SCH["Scan patients due today\n→ Add to send_queue"]
+    subgraph SCHEDULER[WF1a - Daily Scheduler 9AM IST]
+        SCH[Scan patients due today\nAdd to send_queue]
     end
 
-    subgraph SENDER["📤 WF1b — Message Sender (every 5 min)"]
-        SEND["WhatsApp Template\nvia Meta Graph API v21.0"]
+    subgraph SENDER[WF1b - Message Sender every 5 min]
+        SEND[WhatsApp Template\nMeta Graph API v21.0]
     end
 
-    subgraph PATIENT["📱 Patient (WhatsApp)"]
-        PAT_RECV["Receives follow-up message"]
-        PAT_REPLY["Replies in Hindi / English / Hinglish"]
+    subgraph PATIENT[Patient on WhatsApp]
+        PAT_RECV[Receives follow-up message]
+        PAT_REPLY[Replies in Hindi / English / Hinglish]
     end
 
-    subgraph WEBHOOK["📥 WF2 — Webhook Ingestion"]
-        WH["Catch reply → Deduplicate\n→ Store in webhook_queue"]
+    subgraph WEBHOOK[WF2 - Webhook Ingestion]
+        WH[Catch reply - Deduplicate\nStore in webhook_queue]
     end
 
-    subgraph AI_ENGINE["🤖 WF2b — Microsoft AI Processor (every 1 min)"]
-        AI["GitHub Models API\nDeepSeek-V3-0324\nmodels.github.ai/inference"]
-        SENT{{"Sentiment\nResult"}}
+    subgraph AI_ENGINE[WF2b - Microsoft AI Processor every 1 min]
+        AI[GitHub Models API\nDeepSeek-V3-0324\nmodels.github.ai/inference]
+        SENT{{Sentiment Result}}
     end
 
-    subgraph ROUTER["🔀 WF4 — Reply Router (every 1 min)"]
-        POS["✅ POSITIVE\n→ Schedule review request\n(30 min delay)"]
-        NEG["🚨 NEGATIVE\n→ Empathy message to patient\n→ Alert to clinic owner"]
-        NEU["➖ NEUTRAL\n→ Log & monitor"]
-        OPT["🚫 OPT_OUT\n→ Add to blocklist\n→ Confirm to patient"]
+    subgraph ROUTER[WF4 - Reply Router every 1 min]
+        POS[POSITIVE\nSchedule review request\n30 min delay]
+        NEG[NEGATIVE\nEmpathy message to patient\nAlert to clinic owner]
+        NEU[NEUTRAL\nLog and monitor]
+        OPT[OPT_OUT\nAdd to blocklist\nConfirm to patient]
     end
 
-    subgraph ESCALATION["🚨 WF6 — Escalation Handler (every 1 min)"]
-        ESC["Urgent WhatsApp alert\nto clinic owner\nin < 60 seconds"]
+    subgraph ESCALATION[WF6 - Escalation Handler every 1 min]
+        ESC[Urgent WhatsApp alert\nto clinic owner\nin under 60 seconds]
     end
 
-    subgraph ANALYTICS["📊 Analytics Dashboard"]
-        DASH["Real-time Chart.js\nSentiment · Retention · Reviews"]
+    subgraph ANALYTICS[Analytics Dashboard]
+        DASH[Real-time Chart.js\nSentiment · Retention · Reviews]
     end
 
     GS --> SCH --> SEND --> PAT_RECV --> PAT_REPLY
@@ -245,7 +245,7 @@ ClinicCare represents a practical, real-world AI agent that:
 
 **Kasif Shaikh**
 - 🌐 [cliniccare.ecohavens.store](https://cliniccare.ecohavens.store)
-- 📧 kasifshaikh14881@gmail.com
+- 📧 cliniccare@ecohavens.store
 - 🐙 [github.com/kasifshaikh14881-hash](https://github.com/kasifshaikh14881-hash)
 
 ---
