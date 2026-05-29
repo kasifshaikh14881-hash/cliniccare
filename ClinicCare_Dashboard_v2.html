@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClinicCare — Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0078d4;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#8b5cf6;--bg:#08090f;--card:#0d1120;--border:#1a2040;--muted:#6b7280}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:#fff;min-height:100vh;padding:24px}
+.dash{max-width:1200px;margin:0 auto}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.3rem;font-weight:800}
+.logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),#004080);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ai-badge{display:flex;align-items:center;gap:8px;padding:7px 16px;background:rgba(0,120,212,.1);border:1px solid rgba(0,120,212,.3);border-radius:30px;font-size:.8rem;font-weight:600;color:#60aaff}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+.date-range{display:flex;gap:6px}
+.dr-btn{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:.2s}
+.dr-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* LIVE TICKER */
+.ticker{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;overflow:hidden;white-space:nowrap}
+.ticker-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;flex-shrink:0}
+.ticker-label{font-size:.75rem;color:var(--green);font-weight:700;flex-shrink:0;margin-right:8px}
+.ticker-track{overflow:hidden;flex:1}
+.ticker-inner{display:inline-block;animation:tickerScroll 20s linear infinite;font-size:.8rem;color:rgba(255,255,255,.5)}
+@keyframes tickerScroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;overflow:hidden;transition:.3s;cursor:default}
+.kpi-card:hover{border-color:rgba(0,120,212,.4);transform:translateY(-2px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:2px}
+.kpi-card.blue::before{background:linear-gradient(90deg,var(--blue),#00d4ff)}
+.kpi-card.green::before{background:linear-gradient(90deg,var(--green),#10b981)}
+.kpi-card.orange::before{background:linear-gradient(90deg,var(--orange),#f97316)}
+.kpi-card.purple::before{background:linear-gradient(90deg,var(--purple),#ec4899)}
+.kpi-icon{font-size:1.5rem;margin-bottom:12px}
+.kpi-val{font-size:2.4rem;font-weight:900;line-height:1;margin-bottom:4px}
+.kpi-label{font-size:.78rem;color:var(--muted)}
+.kpi-change{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.kpi-change.up{background:rgba(34,197,94,.1);color:var(--green)}
+.kpi-change.down{background:rgba(239,68,68,.1);color:var(--red)}
+.kpi-sparkline{position:absolute;bottom:12px;right:12px;opacity:.5}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px}
+.chart-title{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.chart-sub{font-size:.75rem;color:var(--muted);margin-bottom:20px}
+.chart-wrap{position:relative;height:200px}
+
+/* BOTTOM ROW */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+
+/* SENTIMENT BREAKDOWN */
+.sentiment-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.sent-row{display:flex;align-items:center;gap:10px}
+.sent-label{font-size:.8rem;color:rgba(255,255,255,.6);width:72px;flex-shrink:0}
+.sent-bar-wrap{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.sent-bar{height:100%;border-radius:4px;transition:width 1.5s ease-out}
+.sent-val{font-size:.8rem;font-weight:700;width:44px;text-align:right;flex-shrink:0}
+
+/* RECENT PATIENTS TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid rgba(26,32,64,.5)}
+tr:last-child td{border:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.status-chip{padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
+.chip-pos{background:rgba(34,197,94,.1);color:var(--green)}
+.chip-neg{background:rgba(239,68,68,.1);color:var(--red)}
+.chip-neu{background:rgba(107,114,128,.15);color:var(--muted)}
+.chip-opt{background:rgba(245,158,11,.1);color:var(--orange)}
+.ai-used{font-size:.68rem;padding:2px 8px;border-radius:10px;background:rgba(0,120,212,.12);color:#60aaff;font-weight:600}
+
+/* ALERT FEED */
+.alert-feed{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto}
+.alert-item{padding:12px 14px;border-radius:10px;font-size:.78rem;line-height:1.5;border-left:3px solid}
+.alert-item.neg{background:rgba(239,68,68,.07);border-color:var(--red)}
+.alert-item.pos{background:rgba(34,197,94,.07);border-color:var(--green)}
+.alert-item.info{background:rgba(0,120,212,.07);border-color:var(--blue)}
+.alert-time{font-size:.68rem;color:var(--muted);margin-bottom:4px}
+.alert-name{font-weight:700}
+
+/* RETENTION TREND */
+.retention-number{font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,var(--green),#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.retention-prev{font-size:.8rem;color:var(--muted);margin-top:4px}
+
+/* FOOTER */
+.dash-footer{text-align:center;font-size:.75rem;color:var(--muted);padding:20px 0;border-top:1px solid var(--border);margin-top:8px}
+
+/* RESPONSIVE */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row,.bottom-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="dash">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🏥</div>
+      <div>
+        <div>ClinicCare</div>
+        <div style="font-size:.7rem;font-weight:400;color:var(--muted)">Analytics Dashboard</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="ai-badge"><div class="ai-dot"></div>Microsoft AI Active — DeepSeek-V3</div>
+      <div class="date-range">
+        <button class="dr-btn" onclick="setRange(7,this)">7D</button>
+        <button class="dr-btn active" onclick="setRange(30,this)">30D</button>
+        <button class="dr-btn" onclick="setRange(90,this)">90D</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE TICKER -->
+  <div class="ticker">
+    <div class="ticker-dot"></div>
+    <div class="ticker-label">LIVE</div>
+    <div class="ticker-track">
+      <div class="ticker-inner" id="ticker-inner">Loading...</div>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">📤</div>
+      <div class="kpi-val" id="kv1">342</div>
+      <div class="kpi-label">Follow-ups Sent</div>
+      <div class="kpi-change up" id="kc1">↑ +12% vs last period</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">😊</div>
+      <div class="kpi-val" id="kv2">218</div>
+      <div class="kpi-label">Positive Replies</div>
+      <div class="kpi-change up" id="kc2">↑ +8% vs last period</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon">⭐</div>
+      <div class="kpi-val" id="kv3">73</div>
+      <div class="kpi-label">Reviews Collected</div>
+      <div class="kpi-change up" id="kc3">↑ +24% vs last period</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon">🚨</div>
+      <div class="kpi-val" id="kv4">14</div>
+      <div class="kpi-label">Escalations Handled</div>
+      <div class="kpi-change down" id="kc4">↓ -6% vs last period</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Daily Follow-ups & Replies</div>
+      <div class="chart-sub">Sent vs Replied — last 30 days</div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Sentiment Breakdown</div>
+      <div class="chart-sub">All AI-analyzed replies</div>
+      <div class="chart-wrap" style="height:180px"><canvas id="doughnutChart"></canvas></div>
+      <div class="sentiment-list" style="margin-top:16px">
+        <div class="sent-row"><span class="sent-label">Positive</span><div class="sent-bar-wrap"><div class="sent-bar" style="width:63.7%;background:var(--green)"></div></div><span class="sent-val" style="color:var(--green)">63.7%</span></div>
+        <div class="sent-row"><span class="sent-label">Neutral</span><div class="sent-bar-wrap"><div class="sent-bar" style="width:25.1%;background:#6b7280"></div></div><span class="sent-val" style="color:#9ca3af">25.1%</span></div>
+        <div class="sent-row"><span class="sent-label">Negative</span><div class="sent-bar-wrap"><div class="sent-bar" style="width:11.2%;background:var(--red)"></div></div><span class="sent-val" style="color:var(--red)">11.2%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+
+    <!-- RETENTION -->
+    <div class="chart-card">
+      <div class="chart-title">Patient Retention</div>
+      <div class="chart-sub">Rolling 30-day rate</div>
+      <div style="text-align:center;padding:16px 0 8px">
+        <div class="retention-number">75.6%</div>
+        <div class="retention-prev">+35.6% since using ClinicCare</div>
+        <div style="margin-top:16px;height:80px;position:relative"><canvas id="retentionChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ALERT FEED -->
+    <div class="chart-card">
+      <div class="chart-title">Live Activity Feed</div>
+      <div class="chart-sub" style="margin-bottom:12px">Real-time patient events</div>
+      <div class="alert-feed" id="alert-feed"></div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="chart-card">
+      <div class="chart-title">Reviews vs Target</div>
+      <div class="chart-sub">Monthly Google review goal</div>
+      <div class="chart-wrap" style="height:160px"><canvas id="reviewChart"></canvas></div>
+      <div style="margin-top:12px;text-align:center">
+        <span style="font-size:2rem;font-weight:900;color:var(--orange)">73</span>
+        <span style="color:var(--muted);font-size:.85rem"> / 80 reviews this month</span>
+        <div style="margin-top:8px;background:rgba(255,255,255,.06);border-radius:6px;height:8px;overflow:hidden">
+          <div style="width:91.25%;height:100%;background:linear-gradient(90deg,var(--orange),#f97316);border-radius:6px;transition:width 1.5s ease-out"></div>
+        </div>
+        <div style="font-size:.73rem;color:var(--muted);margin-top:6px">91% of monthly target · 7 reviews to go</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PATIENTS TABLE -->
+  <div class="chart-card" style="margin-bottom:24px">
+    <div class="chart-title">Recent Patient Follow-ups</div>
+    <div class="chart-sub" style="margin-bottom:16px">Last 10 patients · AI sentiment result shown</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Patient</th><th>Clinic</th><th>Treatment</th><th>Follow-up Sent</th><th>Reply</th><th>Sentiment</th><th>Action Taken</th></tr>
+        </thead>
+        <tbody id="patients-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dash-footer">
+    ClinicCare Analytics · Powered by <strong style="color:var(--blue)">Microsoft GitHub Models AI (DeepSeek-V3-0324)</strong> · Built for Microsoft Agents League Hackathon 2026
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────
+const datasets = {
+  30: {
+    labels: Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}),
+    sent:   [8,11,9,14,12,10,7,13,15,11,9,12,16,14,10,8,11,13,12,15,10,14,16,13,11,9,12,15,13,14],
+    replied:[5,7,6,10,9,7,5,9,11,8,6,9,12,10,7,6,8,9,9,11,7,10,12,9,8,7,9,11,9,10],
+    retention:[38,40,42,41,45,44,47,48,50,51,52,54,55,57,56,58,60,61,63,64,65,66,67,69,70,72,73,74,75,76]
+  },
+  7: {
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    sent:[13,15,11,14,12,9,14],
+    replied:[9,11,8,10,9,7,10],
+    retention:[72,73,73,74,75,75,76]
+  },
+  90: {
+    labels: Array.from({length:12},(_,i)=>{const d=new Date();d.setMonth(d.getMonth()-11+i);return d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'})}),
+    sent:   [95,102,89,115,121,108,97,118,125,112,104,342],
+    replied:[58,67,55,74,80,70,62,79,88,76,71,238],
+    retention:[40,43,47,50,54,57,61,64,67,70,73,76]
+  }
+};
+
+let currentRange = 30;
+let lineChart, retentionChart, doughnutChart, reviewChart;
+
+function setRange(r, btn){
+  currentRange = r;
+  document.querySelectorAll('.dr-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateCharts();
+}
+
+function updateCharts(){
+  const d = datasets[currentRange];
+  lineChart.data.labels = d.labels;
+  lineChart.data.datasets[0].data = d.sent;
+  lineChart.data.datasets[1].data = d.replied;
+  lineChart.update();
+  retentionChart.data.labels = d.labels;
+  retentionChart.data.datasets[0].data = d.retention;
+  retentionChart.update();
+}
+
+Chart.defaults.color='rgba(255,255,255,0.4)';
+Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";
+
+// LINE CHART
+const lc = document.getElementById('lineChart').getContext('2d');
+const gradSent=lc.createLinearGradient(0,0,0,200);gradSent.addColorStop(0,'rgba(0,120,212,.35)');gradSent.addColorStop(1,'rgba(0,120,212,0)');
+const gradRep=lc.createLinearGradient(0,0,0,200);gradRep.addColorStop(0,'rgba(34,197,94,.3)');gradRep.addColorStop(1,'rgba(34,197,94,0)');
+lineChart=new Chart(lc,{type:'line',data:{labels:datasets[30].labels,datasets:[
+  {label:'Sent',data:datasets[30].sent,borderColor:'#0078d4',backgroundColor:gradSent,tension:.4,fill:true,pointRadius:2,borderWidth:2},
+  {label:'Replied',data:datasets[30].replied,borderColor:'#22c55e',backgroundColor:gradRep,tension:.4,fill:true,pointRadius:2,borderWidth:2}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:16,color:'rgba(255,255,255,.5)'}},tooltip:{backgroundColor:'#0d1120',borderColor:'#1a2040',borderWidth:1,padding:10,callbacks:{title:t=>`📅 ${t[0].label}`}}},scales:{x:{ticks:{maxTicksLimit:8,font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+// DOUGHNUT
+doughnutChart=new Chart(document.getElementById('doughnutChart').getContext('2d'),{type:'doughnut',data:{labels:['Positive','Neutral','Negative','Opt-out'],datasets:[{data:[218,86,39,7],backgroundColor:['rgba(34,197,94,.8)','rgba(107,114,128,.5)','rgba(239,68,68,.8)','rgba(245,158,11,.7)'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d1120',borderColor:'#1a2040',borderWidth:1,padding:10}}}});
+
+// RETENTION LINE
+const rc=document.getElementById('retentionChart').getContext('2d');
+const gradRet=rc.createLinearGradient(0,0,0,80);gradRet.addColorStop(0,'rgba(34,197,94,.3)');gradRet.addColorStop(1,'rgba(34,197,94,0)');
+retentionChart=new Chart(rc,{type:'line',data:{labels:datasets[30].labels,datasets:[{data:datasets[30].retention,borderColor:'#22c55e',backgroundColor:gradRet,tension:.4,fill:true,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+
+// REVIEW BAR CHART
+reviewChart=new Chart(document.getElementById('reviewChart').getContext('2d'),{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May'],datasets:[{label:'Reviews',data:[18,24,31,47,73],backgroundColor:['rgba(245,158,11,.5)','rgba(245,158,11,.55)','rgba(245,158,11,.6)','rgba(245,158,11,.7)','rgba(245,158,11,.9)'],borderRadius:6,borderWidth:0},{label:'Target',data:[25,25,50,60,80],type:'line',borderColor:'rgba(255,255,255,.15)',backgroundColor:'transparent',tension:0,pointRadius:0,borderDash:[4,4],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d1120',borderColor:'#1a2040',borderWidth:1}},scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+// ─── PATIENT TABLE ────────────────────────────────
+const patients = [
+  {name:'Ravi Kumar',clinic:'Sharma Dental',treatment:'Root Canal',date:'Today 09:00',reply:'Bahut acha feel ho raha hai!',sentiment:'pos',action:'Review link sent ⭐'},
+  {name:'Priya Mehta',clinic:'PhysioPlus',treatment:'Lower Back PT',date:'Today 09:02',reply:'Bahut dard ho raha hai 😢',sentiment:'neg',action:'Alert sent 🚨 + Empathy msg'},
+  {name:'Anil Sharma',clinic:'SkinGlow Clinic',treatment:'Acne Treatment',date:'Today 09:05',reply:'Theek hai, thoda better',sentiment:'neu',action:'Logged + monitoring'},
+  {name:'Fatima Khan',clinic:'Sharma Dental',treatment:'Teeth Cleaning',date:'Yesterday',reply:'Amazing doctor! Thank you!',sentiment:'pos',action:'Review link sent ⭐'},
+  {name:'Rajesh Patel',clinic:'PhysioPlus',treatment:'Shoulder PT',date:'Yesterday',reply:'Stop sending messages',sentiment:'opt',action:'Opted out ✅'},
+  {name:'Sunita Rao',clinic:'SkinGlow Clinic',treatment:'Laser Hair',date:'2 days ago',reply:'Skin looks great now!',sentiment:'pos',action:'Review link sent ⭐'},
+  {name:'Amit Verma',clinic:'Sharma Dental',treatment:'Braces Check',date:'2 days ago',reply:'Dard thoda zyada hai aaj',sentiment:'neg',action:'Alert sent 🚨 + Empathy msg'},
+  {name:'Meera Joshi',clinic:'PhysioPlus',treatment:'Knee PT',date:'3 days ago',reply:'OK',sentiment:'neu',action:'Logged'},
+  {name:'Deepak Singh',clinic:'Sharma Dental',treatment:'Filling',date:'3 days ago',reply:'Ekdum theek hoon, shukriya!',sentiment:'pos',action:'Review link sent ⭐'},
+  {name:'Kavya Nair',clinic:'SkinGlow Clinic',treatment:'Facial',date:'4 days ago',reply:'Loved it! Will come again',sentiment:'pos',action:'Review link sent ⭐'},
+];
+const chips={'pos':'<span class="status-chip chip-pos">✅ POSITIVE</span>','neg':'<span class="status-chip chip-neg">🚨 NEGATIVE</span>','neu':'<span class="status-chip chip-neu">➖ NEUTRAL</span>','opt':'<span class="status-chip chip-opt">🚫 OPT-OUT</span>'};
+const tbody=document.getElementById('patients-table');
+patients.forEach(p=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><strong>${p.name}</strong></td><td style="color:var(--muted)">${p.clinic}</td><td style="color:var(--muted)">${p.treatment}</td><td style="color:var(--muted)">${p.date}</td><td style="max-width:180px;color:rgba(255,255,255,.6)">"${p.reply}"</td><td>${chips[p.sentiment]} <span class="ai-used">🤖 AI</span></td><td style="color:rgba(255,255,255,.55)">${p.action}</td>`;
+  tbody.appendChild(tr);
+});
+
+// ─── ACTIVITY FEED ────────────────────────────────
+const events=[
+  {type:'neg',time:'Just now',text:'<span class="alert-name">Amit Verma</span> reported pain after braces check — alert sent to Dr. Sharma'},
+  {type:'pos',time:'2 min ago',text:'<span class="alert-name">Kavya Nair</span> left a 5★ Google review ⭐'},
+  {type:'info',time:'4 min ago',text:'<span class="alert-name">Deepak Singh</span> replied positively — review request queued'},
+  {type:'pos',time:'8 min ago',text:'<span class="alert-name">Sunita Rao</span> replied: "Skin looks great!" — POSITIVE'},
+  {type:'info',time:'12 min ago',text:'9AM scheduler: 14 follow-ups sent for today'},
+  {type:'neg',time:'Yesterday',text:'<span class="alert-name">Priya Mehta</span> in pain — escalation sent, doctor responded in 4 min'},
+  {type:'pos',time:'Yesterday',text:'<span class="alert-name">Fatima Khan</span> left a 5★ Google review ⭐'},
+];
+const feed=document.getElementById('alert-feed');
+events.forEach(e=>{
+  const d=document.createElement('div');
+  d.className=`alert-item ${e.type}`;
+  d.innerHTML=`<div class="alert-time">${e.time}</div>${e.text}`;
+  feed.appendChild(d);
+});
+
+// ─── TICKER ──────────────────────────────────────
+const tickerEvents=[
+  '🤖 AI analyzed reply from Ravi Kumar → POSITIVE · aiUsed: true',
+  '🚨 Escalation: Priya Mehta pain alert sent to Dr. Sharma in 42 seconds',
+  '⭐ New Google review collected from Kavya Nair (5★)',
+  '📤 9AM Scheduler: 14 follow-ups sent automatically',
+  '✅ Sentiment: 63.7% Positive · 25.1% Neutral · 11.2% Negative today',
+  '🤖 AI model: DeepSeek-V3-0324 via GitHub Models · aiUsed: true',
+  '📊 Retention rate: 75.6% (+35.6% since ClinicCare)',
+];
+document.getElementById('ticker-inner').textContent = tickerEvents.join('   ·   ');
+</script>
+</body>
+</html>
