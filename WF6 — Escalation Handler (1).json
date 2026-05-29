@@ -1,0 +1,815 @@
+﻿{
+  "name": "WF6 — Escalation Handler",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "blogUrl": "",
+  "metadata": {
+    "externalId": "RL9H5VmeJAZmnKhfVLDpt"
+  },
+  "author": "Kasif Shaikh",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-schedule",
+    "@activepieces/piece-google-sheets",
+    "@activepieces/piece-http"
+  ],
+  "flows": [
+    {
+      "displayName": "WF6 — Escalation Handler",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Every 1 Minute",
+        "nextAction": {
+          "name": "step_1_find_negative",
+          "skip": false,
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+              "sheetId": 642871757,
+              "headerRow": 1,
+              "matchCase": false,
+              "columnName": "H",
+              "searchValue": "replied_negative",
+              "numberOfRows": 10,
+              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+              "useHeaderNames": false,
+              "includeTeamDrives": false
+            },
+            "pieceName": "@activepieces/piece-google-sheets",
+            "actionName": "find_rows",
+            "sampleData": {},
+            "pieceVersion": "0.14.7",
+            "propertySettings": {
+              "sheetId": {
+                "type": "MANUAL"
+              },
+              "headerRow": {
+                "type": "MANUAL"
+              },
+              "matchCase": {
+                "type": "MANUAL"
+              },
+              "columnName": {
+                "type": "MANUAL"
+              },
+              "searchValue": {
+                "type": "MANUAL"
+              },
+              "startingRow": {
+                "type": "MANUAL"
+              },
+              "numberOfRows": {
+                "type": "MANUAL"
+              },
+              "spreadsheetId": {
+                "type": "MANUAL"
+              },
+              "useHeaderNames": {
+                "type": "MANUAL"
+              },
+              "includeTeamDrives": {
+                "type": "MANUAL"
+              }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": true
+              },
+              "continueOnFailure": {
+                "value": true
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2_get_clinics",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                "sheetId": 150180561,
+                "headerRow": 1,
+                "matchCase": false,
+                "columnName": "I",
+                "searchValue": "TRUE",
+                "numberOfRows": 50,
+                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                "useHeaderNames": false,
+                "includeTeamDrives": false
+              },
+              "pieceName": "@activepieces/piece-google-sheets",
+              "actionName": "find_rows",
+              "sampleData": {},
+              "pieceVersion": "0.14.7",
+              "propertySettings": {
+                "sheetId": {
+                  "type": "MANUAL"
+                },
+                "headerRow": {
+                  "type": "MANUAL"
+                },
+                "matchCase": {
+                  "type": "MANUAL"
+                },
+                "columnName": {
+                  "type": "MANUAL"
+                },
+                "searchValue": {
+                  "type": "MANUAL"
+                },
+                "startingRow": {
+                  "type": "MANUAL"
+                },
+                "numberOfRows": {
+                  "type": "MANUAL"
+                },
+                "spreadsheetId": {
+                  "type": "MANUAL"
+                },
+                "useHeaderNames": {
+                  "type": "MANUAL"
+                },
+                "includeTeamDrives": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": true
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3_loop",
+              "skip": false,
+              "type": "LOOP_ON_ITEMS",
+              "valid": true,
+              "settings": {
+                "items": "{{step_1_find_negative}}",
+                "sampleData": {}
+              },
+              "displayName": "Loop on Negative Patients",
+              "firstLoopAction": {
+                "name": "step_4_prepare",
+                "skip": false,
+                "type": "CODE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "clinics": "{{step_2_get_clinics}}",
+                    "patient": "{{step_3_loop['item']['values']}}",
+                    "patientRow": "{{step_3_loop['item']['row']}}"
+                  },
+                  "sampleData": {},
+                  "sourceCode": {
+                    "code": "export const code = async (inputs) => {\n  // patients columns:\n  // A=patient_id B=corr_id C=clinic_id D=patient_name E=phone_raw F=phone_cleaned\n  // G=followup_date H=status I=processing_lock J=sentiment ...\n  // Q=alert_sent R=alert_sent_at S=opted_out T=registered_at U=wf_version\n  const pv = inputs.patient || {};\n  const patientRow = inputs.patientRow || '';\n  const clinics = Array.isArray(inputs.clinics) ? inputs.clinics : [];\n\n  const clinicId     = pv['C'] || '';\n  const phone        = pv['F'] || '';\n  const name         = pv['D'] || 'Patient';\n  const corrId       = pv['B'] || '';\n  const followupDate = pv['G'] || '';\n  const alertSent    = (pv['Q'] || '').toString().toUpperCase();\n\n  // CRITICAL IDEMPOTENCY CHECK: alert already sent means WF4 handled it\n  if (alertSent === 'TRUE') {\n    return { skip: true, reason: 'alert_already_sent_by_wf4' };\n  }\n\n  // Find clinic\n  // clinics: A=clinic_id B=clinic_name C=wa_token D=phone_number_id\n  //          E=google_review_link F=owner_phone G=owner_email H=review_delay_m I=is_active\n  const clinic = clinics.find(c => {\n    const cv = c['values'] || c;\n    return (cv['A'] || '').toString().trim() === clinicId.trim();\n  });\n\n  if (!clinic) {\n    return { skip: true, reason: 'clinic_not_found', clinicId };\n  }\n\n  const cv = clinic['values'] || clinic;\n  const waToken       = cv['C'] || '';\n  const phoneNumberId = cv['D'] || '';\n  const ownerPhone    = cv['F'] || '';\n  const clinicName    = cv['B'] || 'Clinic';\n\n  if (!waToken || !phoneNumberId || !ownerPhone) {\n    return { skip: true, reason: 'clinic_credentials_incomplete', clinicId };\n  }\n\n  return {\n    skip: false,\n    phone, name, corrId, clinicId, clinicName,\n    waToken, phoneNumberId, ownerPhone,\n    followupDate, patientRow\n  };\n};",
+                    "packageJson": "{}"
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_5_router",
+                  "skip": false,
+                  "type": "ROUTER",
+                  "valid": true,
+                  "children": [
+                    {
+                      "name": "step_6_lock_alert",
+                      "skip": false,
+                      "type": "PIECE",
+                      "valid": true,
+                      "settings": {
+                        "input": {
+                          "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                          "row_id": "{{step_4_prepare['patientRow']}}",
+                          "values": {
+                            "Q": "TRUE",
+                            "R": "{{now}}"
+                          },
+                          "sheetId": 642871757,
+                          "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                          "first_row_headers": true,
+                          "includeTeamDrives": false
+                        },
+                        "pieceName": "@activepieces/piece-google-sheets",
+                        "actionName": "update_row",
+                        "sampleData": {},
+                        "pieceVersion": "0.14.7",
+                        "propertySettings": {
+                          "row_id": {
+                            "type": "MANUAL"
+                          },
+                          "values": {
+                            "type": "MANUAL",
+                            "schema": {
+                              "A": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "patient_id",
+                                "defaultValue": ""
+                              },
+                              "B": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "corr_id",
+                                "defaultValue": ""
+                              },
+                              "C": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "clinic_id",
+                                "defaultValue": ""
+                              },
+                              "D": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "patient_name",
+                                "defaultValue": ""
+                              },
+                              "E": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "phone_raw",
+                                "defaultValue": ""
+                              },
+                              "F": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "phone_cleaned",
+                                "defaultValue": ""
+                              },
+                              "G": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "followup_date",
+                                "defaultValue": ""
+                              },
+                              "H": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "status",
+                                "defaultValue": ""
+                              },
+                              "I": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "processing_lock",
+                                "defaultValue": ""
+                              },
+                              "J": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "sentiment",
+                                "defaultValue": ""
+                              },
+                              "K": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "delivery_status",
+                                "defaultValue": ""
+                              },
+                              "L": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "delivered_at",
+                                "defaultValue": ""
+                              },
+                              "M": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "read_at",
+                                "defaultValue": ""
+                              },
+                              "N": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "replied_at",
+                                "defaultValue": ""
+                              },
+                              "O": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "review_requested",
+                                "defaultValue": ""
+                              },
+                              "P": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "review_sent_at",
+                                "defaultValue": ""
+                              },
+                              "Q": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "alert_sent",
+                                "defaultValue": ""
+                              },
+                              "R": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "alert_sent_at",
+                                "defaultValue": ""
+                              },
+                              "S": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "opted_out",
+                                "defaultValue": ""
+                              },
+                              "T": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "registered_at",
+                                "defaultValue": ""
+                              },
+                              "U": {
+                                "type": "SHORT_TEXT",
+                                "required": false,
+                                "displayName": "wf_version",
+                                "defaultValue": ""
+                              }
+                            }
+                          },
+                          "sheetId": {
+                            "type": "MANUAL"
+                          },
+                          "spreadsheetId": {
+                            "type": "MANUAL"
+                          },
+                          "first_row_headers": {
+                            "type": "MANUAL"
+                          },
+                          "includeTeamDrives": {
+                            "type": "MANUAL"
+                          }
+                        },
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": true
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_7_alert_owner",
+                        "skip": false,
+                        "type": "PIECE",
+                        "valid": true,
+                        "settings": {
+                          "input": {
+                            "url": "https://graph.facebook.com/v21.0/{{step_4_prepare['phoneNumberId']}}/messages",
+                            "body": {
+                              "data": {
+                                "to": "{{step_4_prepare['ownerPhone']}}",
+                                "text": {
+                                  "body": "🚨 URGENT CLINIC ALERT — {{step_4_prepare['clinicName']}}\n\nEk patient ne negative feedback diya hai!\n\nPatient: {{step_4_prepare['name']}}\nPhone: {{step_4_prepare['phone']}}\nFollowup Date: {{step_4_prepare['followupDate']}}\n\n⚠️ Kripya ABHI patient se contact karein!\n\nPatient ko empathy message bheja ja raha hai. 🙏\n\n— ClinicCare Automated Alert"
+                                },
+                                "type": "text",
+                                "messaging_product": "whatsapp"
+                              }
+                            },
+                            "method": "POST",
+                            "headers": {
+                              "Content-Type": "application/json",
+                              "Authorization": "Bearer {{step_4_prepare['waToken']}}"
+                            },
+                            "authType": "NONE",
+                            "body_type": "json",
+                            "use_proxy": false,
+                            "authFields": {},
+                            "failureMode": "continue_none",
+                            "queryParams": {},
+                            "proxy_settings": {},
+                            "followRedirects": false,
+                            "response_is_binary": false
+                          },
+                          "pieceName": "@activepieces/piece-http",
+                          "actionName": "send_request",
+                          "sampleData": {},
+                          "pieceVersion": "0.11.9",
+                          "propertySettings": {
+                            "url": {
+                              "type": "MANUAL"
+                            },
+                            "body": {
+                              "type": "MANUAL",
+                              "schema": {
+                                "data": {
+                                  "type": "JSON",
+                                  "required": true,
+                                  "displayName": "JSON Body"
+                                }
+                              }
+                            },
+                            "method": {
+                              "type": "MANUAL"
+                            },
+                            "headers": {
+                              "type": "MANUAL"
+                            },
+                            "authType": {
+                              "type": "MANUAL"
+                            },
+                            "body_type": {
+                              "type": "MANUAL"
+                            },
+                            "use_proxy": {
+                              "type": "MANUAL"
+                            },
+                            "authFields": {
+                              "type": "MANUAL",
+                              "schema": {}
+                            },
+                            "failureMode": {
+                              "type": "MANUAL"
+                            },
+                            "queryParams": {
+                              "type": "MANUAL"
+                            },
+                            "proxy_settings": {
+                              "type": "MANUAL",
+                              "schema": {}
+                            },
+                            "followRedirects": {
+                              "type": "MANUAL"
+                            },
+                            "response_is_binary": {
+                              "type": "MANUAL"
+                            }
+                          },
+                          "errorHandlingOptions": {
+                            "retryOnFailure": {
+                              "value": true
+                            },
+                            "continueOnFailure": {
+                              "value": true
+                            }
+                          }
+                        },
+                        "nextAction": {
+                          "name": "step_8_empathy_patient",
+                          "skip": false,
+                          "type": "PIECE",
+                          "valid": true,
+                          "settings": {
+                            "input": {
+                              "url": "https://graph.facebook.com/v21.0/{{step_4_prepare['phoneNumberId']}}/messages",
+                              "body": {
+                                "data": {
+                                  "to": "{{step_4_prepare['phone']}}",
+                                  "text": {
+                                    "body": "{{step_4_prepare['name']}} ji, aapki baat sunke bahut dukh hua 🙏\n\nAapki clinic ki team jald hi aapko contact karengi. Please thoda sabr karein.\n\nAap bilkul akele nahi hain — aapka poora khayal rakha jayega. 💙\n\n— {{step_4_prepare['clinicName']}} Team"
+                                  },
+                                  "type": "text",
+                                  "messaging_product": "whatsapp"
+                                }
+                              },
+                              "method": "POST",
+                              "headers": {
+                                "Content-Type": "application/json",
+                                "Authorization": "Bearer {{step_4_prepare['waToken']}}"
+                              },
+                              "authType": "NONE",
+                              "body_type": "json",
+                              "use_proxy": false,
+                              "authFields": {},
+                              "failureMode": "continue_none",
+                              "queryParams": {},
+                              "proxy_settings": {},
+                              "followRedirects": false,
+                              "response_is_binary": false
+                            },
+                            "pieceName": "@activepieces/piece-http",
+                            "actionName": "send_request",
+                            "sampleData": {},
+                            "pieceVersion": "0.11.9",
+                            "propertySettings": {
+                              "url": {
+                                "type": "MANUAL"
+                              },
+                              "body": {
+                                "type": "MANUAL",
+                                "schema": {
+                                  "data": {
+                                    "type": "JSON",
+                                    "required": true,
+                                    "displayName": "JSON Body"
+                                  }
+                                }
+                              },
+                              "method": {
+                                "type": "MANUAL"
+                              },
+                              "headers": {
+                                "type": "MANUAL"
+                              },
+                              "authType": {
+                                "type": "MANUAL"
+                              },
+                              "body_type": {
+                                "type": "MANUAL"
+                              },
+                              "use_proxy": {
+                                "type": "MANUAL"
+                              },
+                              "authFields": {
+                                "type": "MANUAL",
+                                "schema": {}
+                              },
+                              "failureMode": {
+                                "type": "MANUAL"
+                              },
+                              "queryParams": {
+                                "type": "MANUAL"
+                              },
+                              "proxy_settings": {
+                                "type": "MANUAL",
+                                "schema": {}
+                              },
+                              "followRedirects": {
+                                "type": "MANUAL"
+                              },
+                              "response_is_binary": {
+                                "type": "MANUAL"
+                              }
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": true
+                              },
+                              "continueOnFailure": {
+                                "value": true
+                              }
+                            }
+                          },
+                          "nextAction": {
+                            "name": "step_9_status_escalated",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": true,
+                            "settings": {
+                              "input": {
+                                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                "row_id": "{{step_4_prepare['patientRow']}}",
+                                "values": {
+                                  "H": "escalated"
+                                },
+                                "sheetId": 642871757,
+                                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                "first_row_headers": true,
+                                "includeTeamDrives": false
+                              },
+                              "pieceName": "@activepieces/piece-google-sheets",
+                              "actionName": "update_row",
+                              "sampleData": {},
+                              "pieceVersion": "0.14.7",
+                              "propertySettings": {
+                                "row_id": {
+                                  "type": "MANUAL"
+                                },
+                                "values": {
+                                  "type": "MANUAL",
+                                  "schema": {
+                                    "A": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "patient_id",
+                                      "defaultValue": ""
+                                    },
+                                    "B": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "corr_id",
+                                      "defaultValue": ""
+                                    },
+                                    "C": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "clinic_id",
+                                      "defaultValue": ""
+                                    },
+                                    "D": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "patient_name",
+                                      "defaultValue": ""
+                                    },
+                                    "E": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "phone_raw",
+                                      "defaultValue": ""
+                                    },
+                                    "F": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "phone_cleaned",
+                                      "defaultValue": ""
+                                    },
+                                    "G": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "followup_date",
+                                      "defaultValue": ""
+                                    },
+                                    "H": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "status",
+                                      "defaultValue": ""
+                                    },
+                                    "I": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "processing_lock",
+                                      "defaultValue": ""
+                                    },
+                                    "J": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "sentiment",
+                                      "defaultValue": ""
+                                    },
+                                    "K": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "delivery_status",
+                                      "defaultValue": ""
+                                    },
+                                    "L": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "delivered_at",
+                                      "defaultValue": ""
+                                    },
+                                    "M": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "read_at",
+                                      "defaultValue": ""
+                                    },
+                                    "N": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "replied_at",
+                                      "defaultValue": ""
+                                    },
+                                    "O": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "review_requested",
+                                      "defaultValue": ""
+                                    },
+                                    "P": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "review_sent_at",
+                                      "defaultValue": ""
+                                    },
+                                    "Q": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "alert_sent",
+                                      "defaultValue": ""
+                                    },
+                                    "R": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "alert_sent_at",
+                                      "defaultValue": ""
+                                    },
+                                    "S": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "opted_out",
+                                      "defaultValue": ""
+                                    },
+                                    "T": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "registered_at",
+                                      "defaultValue": ""
+                                    },
+                                    "U": {
+                                      "type": "SHORT_TEXT",
+                                      "required": false,
+                                      "displayName": "wf_version",
+                                      "defaultValue": ""
+                                    }
+                                  }
+                                },
+                                "sheetId": {
+                                  "type": "MANUAL"
+                                },
+                                "spreadsheetId": {
+                                  "type": "MANUAL"
+                                },
+                                "first_row_headers": {
+                                  "type": "MANUAL"
+                                },
+                                "includeTeamDrives": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": true
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "displayName": "Update patients — status = escalated",
+                            "lastUpdatedDate": "2026-05-18T12:23:32.337Z"
+                          },
+                          "displayName": "Send empathy message to patient (always runs even if owner alert fails)",
+                          "lastUpdatedDate": "2026-05-18T05:46:27.780Z"
+                        },
+                        "displayName": "Send URGENT alert to clinic owner",
+                        "lastUpdatedDate": "2026-05-18T05:46:27.780Z"
+                      },
+                      "displayName": "LOCK — Mark alert_sent=TRUE BEFORE sending (prevents duplicate alerts!)",
+                      "lastUpdatedDate": "2026-05-18T12:22:41.600Z"
+                    },
+                    null
+                  ],
+                  "settings": {
+                    "branches": [
+                      {
+                        "branchName": "Escalate",
+                        "branchType": "CONDITION",
+                        "conditions": [
+                          [
+                            {
+                              "operator": "TEXT_EXACTLY_MATCHES",
+                              "firstValue": "{{step_4_prepare['skip']}}",
+                              "secondValue": "false",
+                              "caseSensitive": false
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "branchName": "Skip",
+                        "branchType": "FALLBACK"
+                      }
+                    ],
+                    "sampleData": {},
+                    "executionType": "EXECUTE_FIRST_MATCH"
+                  },
+                  "displayName": "Route — escalate or skip",
+                  "lastUpdatedDate": "2026-05-18T05:46:27.780Z"
+                },
+                "displayName": "Prepare — check idempotency + clinic lookup",
+                "lastUpdatedDate": "2026-05-18T05:46:27.780Z"
+              },
+              "lastUpdatedDate": "2026-05-18T05:46:27.779Z"
+            },
+            "displayName": "Load Active Clinics",
+            "lastUpdatedDate": "2026-05-18T12:21:50.245Z"
+          },
+          "displayName": "Find replied_negative patients (alert_sent = FALSE)",
+          "lastUpdatedDate": "2026-05-18T12:21:11.857Z"
+        },
+        "lastUpdatedDate": "2026-05-18T05:46:27.779Z",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "minutes": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-schedule",
+          "pieceVersion": "0.1.17",
+          "triggerName": "every_x_minutes",
+          "input": {
+            "minutes": 1
+          }
+        }
+      },
+      "valid": true,
+      "schemaVersion": "20",
+      "notes": []
+    }
+  ],
+  "status": "PUBLISHED"
+}
