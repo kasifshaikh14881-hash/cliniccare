@@ -64,36 +64,69 @@ Automated Action (Review Request / Escalation Alert / Empathy Message)
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    CLINICCARE SYSTEM                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  WF1a: Daily Scheduler (9AM IST)                           │
-│  └── Scans Google Sheets → Adds today's patients to queue  │
-│                                                             │
-│  WF1b: Message Sender (every 5 min)                        │
-│  └── Sends WhatsApp template via Meta Graph API v21.0      │
-│                                                             │
-│  WF2: Webhook Ingestion                                     │
-│  └── Catches patient replies → Deduplicates → Stores       │
-│                                                             │
-│  WF2b: AI Queue Processor (every 1 min)  ← MICROSOFT AI   │
-│  └── GitHub Models (DeepSeek-V3) → Sentiment Analysis      │
-│  └── Routes: Positive / Negative / Neutral / Opt-Out       │
-│                                                             │
-│  WF4: Reply Router (every 1 min)                           │
-│  └── Positive → Schedule review request                    │
-│  └── Negative → Alert clinic owner + Empathy message       │
-│                                                             │
-│  WF6: Escalation Handler (every 1 min)                     │
-│  └── Urgent alerts for patients in pain                    │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-         ↓                              ↓
-   Google Sheets DB              Analytics Dashboard
-   (Patients, Queue,             (Chart.js + Real-time
-    Conversation Log)             Sentiment Tracking)
+```mermaid
+flowchart TD
+    subgraph CLINIC["🏥 Clinic (Google Sheets DB)"]
+        GS[("📋 Google Sheets\nPatients · Queue · Logs")]
+    end
+
+    subgraph SCHEDULER["⏰ WF1a — Daily Scheduler (9AM IST)"]
+        SCH["Scan patients due today\n→ Add to send_queue"]
+    end
+
+    subgraph SENDER["📤 WF1b — Message Sender (every 5 min)"]
+        SEND["WhatsApp Template\nvia Meta Graph API v21.0"]
+    end
+
+    subgraph PATIENT["📱 Patient (WhatsApp)"]
+        PAT_RECV["Receives follow-up message"]
+        PAT_REPLY["Replies in Hindi / English / Hinglish"]
+    end
+
+    subgraph WEBHOOK["📥 WF2 — Webhook Ingestion"]
+        WH["Catch reply → Deduplicate\n→ Store in webhook_queue"]
+    end
+
+    subgraph AI_ENGINE["🤖 WF2b — Microsoft AI Processor (every 1 min)"]
+        AI["GitHub Models API\nDeepSeek-V3-0324\nmodels.github.ai/inference"]
+        SENT{{"Sentiment\nResult"}}
+    end
+
+    subgraph ROUTER["🔀 WF4 — Reply Router (every 1 min)"]
+        POS["✅ POSITIVE\n→ Schedule review request\n(30 min delay)"]
+        NEG["🚨 NEGATIVE\n→ Empathy message to patient\n→ Alert to clinic owner"]
+        NEU["➖ NEUTRAL\n→ Log & monitor"]
+        OPT["🚫 OPT_OUT\n→ Add to blocklist\n→ Confirm to patient"]
+    end
+
+    subgraph ESCALATION["🚨 WF6 — Escalation Handler (every 1 min)"]
+        ESC["Urgent WhatsApp alert\nto clinic owner\nin < 60 seconds"]
+    end
+
+    subgraph ANALYTICS["📊 Analytics Dashboard"]
+        DASH["Real-time Chart.js\nSentiment · Retention · Reviews"]
+    end
+
+    GS --> SCH --> SEND --> PAT_RECV --> PAT_REPLY
+    PAT_REPLY --> WH --> AI
+    AI --> SENT
+    SENT -->|POSITIVE| POS
+    SENT -->|NEGATIVE| NEG
+    SENT -->|NEUTRAL| NEU
+    SENT -->|OPT_OUT| OPT
+    NEG --> ESC
+    POS --> GS
+    NEG --> GS
+    ESC --> GS
+    GS --> DASH
+
+    style AI fill:#0d2137,stroke:#0078d4,color:#60aaff
+    style SENT fill:#0a1929,stroke:#0078d4,color:#fff
+    style POS fill:#052010,stroke:#22c55e,color:#4ade80
+    style NEG fill:#1f0a0a,stroke:#ef4444,color:#f87171
+    style ESC fill:#1f0a0a,stroke:#ef4444,color:#f87171
+    style DASH fill:#0d1120,stroke:#8b5cf6,color:#a78bfa
+    style GS fill:#0a1424,stroke:#0078d4,color:#93c5fd
 ```
 
 ---
@@ -212,7 +245,7 @@ ClinicCare represents a practical, real-world AI agent that:
 
 **Kasif Shaikh**
 - 🌐 [cliniccare.ecohavens.store](https://cliniccare.ecohavens.store)
-- 📧 📧 cliniccare@ecohavens.store
+- 📧 kasifshaikh14881@gmail.com
 - 🐙 [github.com/kasifshaikh14881-hash](https://github.com/kasifshaikh14881-hash)
 
 ---
