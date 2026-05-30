@@ -6,7 +6,7 @@
   "tags": [],
   "blogUrl": "",
   "metadata": {
-    "externalId": "YYZ1fmp9unDn2aDqQ4Vbl"
+    "externalId": "YOUR_WORKFLOW_ID"
   },
   "author": "Kasif Shaikh",
   "categories": [],
@@ -28,14 +28,14 @@
           "valid": true,
           "settings": {
             "input": {
-              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
               "sheetId": 989745852,
               "headerRow": 1,
               "matchCase": false,
               "columnName": "F",
               "searchValue": "pending",
               "numberOfRows": 20,
-              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+              "spreadsheetId": "YOUR_SPREADSHEET_ID",
               "useHeaderNames": false,
               "includeTeamDrives": false
             },
@@ -91,14 +91,14 @@
             "valid": true,
             "settings": {
               "input": {
-                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                 "sheetId": 642871757,
                 "headerRow": 1,
                 "matchCase": false,
                 "columnName": "A",
                 "searchValue": "P",
                 "numberOfRows": 500,
-                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                 "useHeaderNames": false,
                 "includeTeamDrives": false
               },
@@ -154,14 +154,14 @@
               "valid": true,
               "settings": {
                 "input": {
-                  "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                  "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                   "sheetId": 914167121,
                   "headerRow": 1,
                   "matchCase": false,
                   "columnName": "B",
                   "searchValue": "9",
                   "numberOfRows": 500,
-                  "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                  "spreadsheetId": "YOUR_SPREADSHEET_ID",
                   "useHeaderNames": false,
                   "includeTeamDrives": false
                 },
@@ -228,11 +228,11 @@
                   "valid": true,
                   "settings": {
                     "input": {
-                      "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                      "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                       "row_id": "{{step_4_loop['item']['row']}}",
                       "values": {},
                       "sheetId": 989745852,
-                      "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                      "spreadsheetId": "YOUR_SPREADSHEET_ID",
                       "first_row_headers": true,
                       "includeTeamDrives": false
                     },
@@ -374,7 +374,7 @@
                           "valid": true,
                           "settings": {
                             "input": {
-                              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                               "values": {
                                 "A": "{{step_6_analyze['corrId']}}",
                                 "B": "{{step_6_analyze['fromPhone']}}",
@@ -385,7 +385,7 @@
                               },
                               "sheetId": 914167121,
                               "as_string": false,
-                              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                              "spreadsheetId": "YOUR_SPREADSHEET_ID",
                               "first_row_headers": true,
                               "includeTeamDrives": false
                             },
@@ -470,13 +470,13 @@
                             "valid": true,
                             "settings": {
                               "input": {
-                                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                 "row_id": "{{step_6_analyze['patientRow']}}",
                                 "values": {
                                   "S": "TRUE"
                                 },
                                 "sheetId": 642871757,
-                                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                 "first_row_headers": true,
                                 "includeTeamDrives": false
                               },
@@ -651,13 +651,13 @@
                               "valid": true,
                               "settings": {
                                 "input": {
-                                  "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                  "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                   "values": {
                                     "B": "{{now}}"
                                   },
                                   "sheetId": 1165874072,
                                   "as_string": false,
-                                  "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                  "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                   "first_row_headers": true,
                                   "includeTeamDrives": false
                                 },
@@ -754,14 +754,14 @@
                                 "valid": true,
                                 "settings": {
                                   "input": {
-                                    "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                    "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                     "row_id": "{{step_4_loop['item']['row']}}",
                                     "values": {
                                       "F": "processed",
                                       "I": "{{now}}"
                                     },
                                     "sheetId": 989745852,
-                                    "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                    "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                     "first_row_headers": true,
                                     "includeTeamDrives": false
                                   },
@@ -882,7 +882,7 @@
                           "valid": true,
                           "settings": {
                             "input": {
-                              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                               "row_id": "{{step_6_analyze['patientRow']}}",
                               "values": {
                                 "H": "{{step_6_analyze['patientStatus']}}",
@@ -890,7 +890,7 @@
                                 "N": "{{now}}"
                               },
                               "sheetId": 642871757,
-                              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                              "spreadsheetId": "YOUR_SPREADSHEET_ID",
                               "first_row_headers": true,
                               "includeTeamDrives": false
                             },
@@ -1065,7 +1065,7 @@
                             "valid": true,
                             "settings": {
                               "input": {
-                                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                 "values": {
                                   "B": "{{now}}",
                                   "C": "inbound",
@@ -1073,7 +1073,7 @@
                                 },
                                 "sheetId": 1165874072,
                                 "as_string": false,
-                                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                 "first_row_headers": true,
                                 "includeTeamDrives": false
                               },
@@ -1170,14 +1170,14 @@
                               "valid": true,
                               "settings": {
                                 "input": {
-                                  "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                  "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                   "row_id": "{{step_4_loop['item']['row']}}",
                                   "values": {
                                     "F": "processed",
                                     "I": "{{now}}"
                                   },
                                   "sheetId": 989745852,
-                                  "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                  "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                   "first_row_headers": true,
                                   "includeTeamDrives": false
                                 },
@@ -1295,14 +1295,14 @@
                           "valid": true,
                           "settings": {
                             "input": {
-                              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                               "row_id": "{{step_4_loop['item']['row']}}",
                               "values": {
                                 "F": "skipped",
                                 "I": "{{now}}"
                               },
                               "sheetId": 989745852,
-                              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                              "spreadsheetId": "YOUR_SPREADSHEET_ID",
                               "first_row_headers": true,
                               "includeTeamDrives": false
                             },

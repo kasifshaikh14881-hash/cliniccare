@@ -6,7 +6,7 @@
   "tags": [],
   "blogUrl": "",
   "metadata": {
-    "externalId": "LGfE9h1TcGkNe4Pes6SK2"
+    "externalId": "YOUR_WORKFLOW_ID"
   },
   "author": "Kasif Shaikh",
   "categories": [],
@@ -117,7 +117,7 @@
                 "valid": true,
                 "settings": {
                   "input": {
-                    "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                    "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                     "sheetId": 989745852,
                     "headerRow": 1,
                     "matchCase": true,
@@ -125,7 +125,7 @@
                     "searchValue": "{{step_1.output.msgId}}",
                     "startingRow": "2",
                     "numberOfRows": 1,
-                    "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                    "spreadsheetId": "YOUR_SPREADSHEET_ID",
                     "useHeaderNames": true,
                     "includeTeamDrives": false
                   },
@@ -270,7 +270,7 @@
                         "valid": true,
                         "settings": {
                           "input": {
-                            "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                            "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                             "values": {
                               "A": "{{new Date().getTime()}}-{{Math.random().toString(36).substr(2,6)}}",
                               "C": "{{step_1.msgId}}",
@@ -282,7 +282,7 @@
                             },
                             "sheetId": 1253630769,
                             "as_string": false,
-                            "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                            "spreadsheetId": "YOUR_SPREADSHEET_ID",
                             "first_row_headers": true,
                             "includeTeamDrives": false
                           },
@@ -376,7 +376,7 @@
                           "valid": true,
                           "settings": {
                             "input": {
-                              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                               "values": {
                                 "A": "{{new Date().getTime()}}",
                                 "B": "{{step_1.msgId}}",
@@ -390,7 +390,7 @@
                               },
                               "sheetId": 989745852,
                               "as_string": false,
-                              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                              "spreadsheetId": "YOUR_SPREADSHEET_ID",
                               "first_row_headers": true,
                               "includeTeamDrives": false
                             },

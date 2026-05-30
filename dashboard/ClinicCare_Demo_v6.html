@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClinicCare — Microsoft Agents League 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════ */
+:root {
+  --bg:       #03050A;
+  --surface:  #070C14;
+  --card:     rgba(255,255,255,.038);
+  --border:   rgba(255,255,255,.07);
+  --cyan:     #00D4FF;
+  --blue:     #0066FF;
+  --purple:   #7B4FFF;
+  --green:    #00E87A;
+  --red:      #FF3355;
+  --amber:    #FFAA00;
+  --text-1:   #FFFFFF;
+  --text-2:   rgba(255,255,255,.55);
+  --text-3:   rgba(255,255,255,.3);
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --display:  'Space Grotesk', sans-serif;
+}
+
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg);
+  font-family:var(--sans); color:var(--text-1); }
+
+/* ══════════════════════════════════════════════
+   AMBIENT BACKGROUND
+══════════════════════════════════════════════ */
+#bg-canvas { position:fixed; inset:0; z-index:0; }
+
+.orb { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
+.orb-1 { width:600px; height:600px; background:radial-gradient(circle,rgba(0,102,255,.12),transparent 70%);
+  top:-200px; left:-200px; animation:orbFloat1 18s ease-in-out infinite; }
+.orb-2 { width:500px; height:500px; background:radial-gradient(circle,rgba(0,212,255,.08),transparent 70%);
+  bottom:-150px; right:-150px; animation:orbFloat2 22s ease-in-out infinite; }
+.orb-3 { width:400px; height:400px; background:radial-gradient(circle,rgba(123,79,255,.07),transparent 70%);
+  top:40%; left:40%; transform:translate(-50%,-50%); animation:orbFloat3 15s ease-in-out infinite; }
+
+@keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(80px,60px)} }
+@keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-60px,-40px)} }
+@keyframes orbFloat3 { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.15)} }
+
+/* ══════════════════════════════════════════════
+   HUD
+══════════════════════════════════════════════ */
+#hud {
+  position:fixed; top:0; left:0; right:0; z-index:900;
+  height:52px; display:flex; align-items:center; padding:0 28px;
+  justify-content:space-between;
+  background:linear-gradient(180deg,rgba(3,5,10,.9),transparent);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+#hud-logo { font-family:var(--display); font-size:1rem; font-weight:700;
+  color:var(--text-1); letter-spacing:-.3px; }
+#hud-logo span { color:var(--cyan); }
+#hud-title { font-size:.68rem; letter-spacing:2.5px; text-transform:uppercase;
+  color:var(--cyan); font-weight:600; opacity:.7; }
+#hud-right { display:flex; align-items:center; gap:16px; }
+#hud-counter { font-size:.7rem; color:var(--text-3); letter-spacing:1px; font-family:var(--mono); }
+#progress-track { width:120px; height:2px; background:rgba(255,255,255,.08); border-radius:1px; overflow:hidden; }
+#progress-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--blue));
+  transition:width .4s; box-shadow:0 0 8px var(--cyan); }
+#timer-line { position:fixed; bottom:0; left:0; height:2px; background:rgba(0,212,255,.3);
+  z-index:900; transition:width linear; }
+
+/* ══════════════════════════════════════════════
+   NAV DOTS
+══════════════════════════════════════════════ */
+#nav-dots { position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  display:flex; gap:5px; z-index:900; }
+.nd { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,.2);
+  cursor:pointer; transition:.3s; }
+.nd.on { width:16px; border-radius:3px; background:var(--cyan);
+  box-shadow:0 0 6px var(--cyan); }
+
+/* skip */
+#skip-btn { position:fixed; bottom:18px; right:24px; z-index:900;
+  padding:7px 18px; border-radius:30px; border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04); color:rgba(255,255,255,.4);
+  font-size:.72rem; cursor:pointer; font-family:var(--sans);
+  backdrop-filter:blur(12px); transition:.2s; letter-spacing:.5px; }
+#skip-btn:hover { background:rgba(255,255,255,.1); color:#fff; }
+
+/* ══════════════════════════════════════════════
+   SCENE SYSTEM
+══════════════════════════════════════════════ */
+.scene { position:fixed; inset:52px 0 0; z-index:10;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .5s ease; }
+.scene.on { opacity:1; pointer-events:all; }
+
+.s-wrap { width:100%; max-width:1180px; padding:0 32px;
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center; position:relative; z-index:2; }
+
+/* ══════════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════════ */
+.label { font-size:.68rem; letter-spacing:3px; text-transform:uppercase;
+  font-weight:700; color:var(--cyan); margin-bottom:14px; opacity:.8; }
+.title { font-family:var(--display); font-size:clamp(1.8rem,4.5vw,3.6rem);
+  font-weight:800; line-height:1.08; letter-spacing:-1.5px; margin-bottom:12px; }
+.subtitle { font-size:clamp(.9rem,1.7vw,1.1rem); color:var(--text-2);
+  line-height:1.65; max-width:600px; margin:0 auto; }
+
+.gradient-text {
+  background:linear-gradient(135deg,#fff 10%,var(--cyan) 50%,var(--blue) 90%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.gradient-red {
+  background:linear-gradient(135deg,#FF6B6B,var(--red));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.gradient-green {
+  background:linear-gradient(135deg,#4ADE80,var(--green));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* ══════════════════════════════════════════════
+   GLASS CARD
+══════════════════════════════════════════════ */
+.gc { background:var(--card); border:1px solid var(--border);
+  border-radius:18px; backdrop-filter:blur(20px); }
+.gc-cyan { background:rgba(0,212,255,.04); border:1px solid rgba(0,212,255,.14);
+  border-radius:18px; backdrop-filter:blur(20px); box-shadow:0 0 32px rgba(0,212,255,.06); }
+.gc-glow { box-shadow:0 0 50px rgba(0,212,255,.1), 0 0 0 1px rgba(0,212,255,.15); }
+
+/* ══════════════════════════════════════════════
+   BADGE / CHIPS
+══════════════════════════════════════════════ */
+.chip { display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+  border-radius:30px; font-size:.73rem; font-weight:600; letter-spacing:.3px; }
+.chip-ms   { background:rgba(0,102,255,.12); border:1px solid rgba(0,102,255,.3); color:#60A5FF; }
+.chip-hack { background:rgba(255,170,0,.1); border:1px solid rgba(255,170,0,.3); color:#FBBF24; }
+.chip-g    { background:rgba(0,232,122,.08); border:1px solid rgba(0,232,122,.25); color:#4ADE80; }
+.chip-r    { background:rgba(255,51,85,.1); border:1px solid rgba(255,51,85,.3); color:#F87171; }
+.chip-p    { background:rgba(123,79,255,.1); border:1px solid rgba(123,79,255,.3); color:#A78BFA; }
+
+/* ══════════════════════════════════════════════
+   PHONE FRAME
+══════════════════════════════════════════════ */
+.phone { width:264px; flex-shrink:0;
+  background:#08111A; border-radius:40px; overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),
+             0 40px 80px rgba(0,0,0,.7),
+             inset 0 1px 0 rgba(255,255,255,.04); }
+.phone-island { height:22px; display:flex; align-items:center; justify-content:center;
+  background:#08111A; }
+.phone-island-pill { width:88px; height:8px; background:#000; border-radius:8px; }
+.phone-bar { background:#111D2A; padding:11px 16px;
+  display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.04); }
+.phone-ava { width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0; }
+.phone-name { font-size:.8rem; font-weight:700; color:#E2E8F0; }
+.phone-status { font-size:.65rem; color:rgba(255,255,255,.35); margin-top:1px; }
+.phone-body { padding:11px; background:#07101A; min-height:260px;
+  display:flex; flex-direction:column; gap:7px;
+  background-image:repeating-linear-gradient(
+    45deg,rgba(255,255,255,.008) 0px,rgba(255,255,255,.008) 1px,
+    transparent 1px,transparent 12px); }
+
+/* ══════════════════════════════════════════════
+   MESSAGES
+══════════════════════════════════════════════ */
+.msg { max-width:86%; padding:9px 12px; border-radius:14px;
+  font-size:.77rem; line-height:1.55; opacity:0;
+  transform:translateY(10px) scale(.97); transition:.4s ease;
+  word-break:break-word; }
+.msg.vis { opacity:1; transform:none; }
+.msg-out { background:#005C4B; align-self:flex-end; border-bottom-right-radius:4px; }
+.msg-in { background:#1A2633; align-self:flex-start; border-bottom-left-radius:4px;
+  border:1px solid rgba(255,255,255,.04); }
+.msg-time { font-size:.6rem; color:rgba(255,255,255,.3); margin-top:4px;
+  display:flex; align-items:center; gap:3px; justify-content:flex-end; }
+.tick { color:#53BDEB; font-size:.7rem; }
+.typing { background:#1A2633; padding:10px 14px; border-radius:14px;
+  border-bottom-left-radius:4px; align-self:flex-start;
+  display:flex; gap:4px; align-items:center;
+  border:1px solid rgba(255,255,255,.04); }
+.typing span { width:6px; height:6px; border-radius:50%;
+  background:rgba(255,255,255,.3); animation:td 1.2s infinite; }
+.typing span:nth-child(2){animation-delay:.18s}
+.typing span:nth-child(3){animation-delay:.36s}
+@keyframes td{0%,60%,100%{opacity:.3;transform:scale(1)}30%{opacity:1;transform:scale(1.35)}}
+
+/* ══════════════════════════════════════════════
+   AI PANEL
+══════════════════════════════════════════════ */
+.ai-panel { background:rgba(0,0,0,.5); border:1px solid rgba(0,212,255,.12);
+  border-radius:20px; padding:22px; width:280px; flex-shrink:0;
+  backdrop-filter:blur(30px);
+  box-shadow:0 0 60px rgba(0,212,255,.07), inset 0 1px 0 rgba(0,212,255,.08); }
+.ai-model-row { display:flex; align-items:center; gap:10px; padding:10px 13px;
+  background:rgba(0,102,255,.1); border:1px solid rgba(0,102,255,.2);
+  border-radius:12px; margin-bottom:18px; }
+.ai-name { font-size:.73rem; font-weight:700; color:#60A5FF; }
+.ai-sub { font-size:.62rem; color:rgba(255,255,255,.35); margin-top:1px; }
+
+.ai-bar-row { margin-bottom:14px; }
+.ai-bar-label-row { display:flex; justify-content:space-between;
+  font-size:.67rem; color:rgba(255,255,255,.4); margin-bottom:5px; }
+.ai-bar-pct { font-weight:700; }
+.ai-track { height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
+.ai-fill { height:100%; border-radius:2px; width:0%; transition:width 1.6s cubic-bezier(.4,0,.2,1); }
+
+.ring-wrap { display:flex; align-items:center; justify-content:center;
+  margin:14px 0; gap:14px; }
+.ring-outer { position:relative; width:72px; height:72px; }
+.ring-outer svg { transform:rotate(-90deg); }
+.ring-bg-c { fill:none; stroke:rgba(255,255,255,.05); stroke-width:5; }
+.ring-fg-c { fill:none; stroke-width:5; stroke-linecap:round;
+  stroke-dasharray:188; stroke-dashoffset:188;
+  transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1); }
+.ring-label { position:absolute; inset:0; display:flex; align-items:center;
+  justify-content:center; font-family:var(--display);
+  font-size:.9rem; font-weight:800; }
+.ai-result { padding:14px; border-radius:13px; text-align:center;
+  font-family:var(--display); font-weight:700; font-size:1rem;
+  opacity:0; transform:translateY(8px) scale(.94);
+  transition:.5s cubic-bezier(.34,1.56,.64,1); }
+.ai-result.vis { opacity:1; transform:none; }
+.ai-result-pos { background:rgba(0,232,122,.07); border:1px solid rgba(0,232,122,.22); color:#4ADE80; }
+.ai-result-neg { background:rgba(255,51,85,.07); border:1px solid rgba(255,51,85,.22); color:#F87171; }
+.ai-meta-sm { font-size:.62rem; color:rgba(255,255,255,.3); margin-top:5px;
+  font-family:var(--mono); font-weight:400; }
+
+/* ══════════════════════════════════════════════
+   SVG FLOW DIAGRAM
+══════════════════════════════════════════════ */
+.flow-svg-wrap { width:100%; max-width:860px; margin:0 auto; overflow:visible; }
+
+/* ══════════════════════════════════════════════
+   FLOW NODES (Text-based)
+══════════════════════════════════════════════ */
+.fn-row { display:flex; align-items:center; gap:0; justify-content:center;
+  flex-wrap:nowrap; }
+.fn { background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:14px 16px; text-align:center;
+  min-width:108px; flex-shrink:0;
+  opacity:0; transform:translateY(12px) scale(.93); transition:.45s ease; }
+.fn.vis { opacity:1; transform:none; }
+.fn-icon { font-size:1.45rem; margin-bottom:6px; }
+.fn-cap { font-size:.6rem; color:var(--cyan); font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; }
+.fn-txt { font-size:.7rem; color:var(--text-2); line-height:1.4; }
+.fn-arrow { flex-shrink:0; color:rgba(0,212,255,.3); font-size:1.3rem;
+  margin:0 4px; opacity:0; transition:.3s; align-self:center; }
+.fn-arrow.vis { opacity:1; }
+.fn-pos { border-color:rgba(0,232,122,.35); background:rgba(0,232,122,.05);
+  box-shadow:0 0 20px rgba(0,232,122,.1); }
+.fn-neg { border-color:rgba(255,51,85,.35); background:rgba(255,51,85,.05);
+  box-shadow:0 0 20px rgba(255,51,85,.1); }
+.fn-cyan { border-color:rgba(0,212,255,.35); background:rgba(0,212,255,.05);
+  box-shadow:0 0 20px rgba(0,212,255,.1); }
+
+/* ══════════════════════════════════════════════
+   FLOW GRID (7 cards)
+══════════════════════════════════════════════ */
+.fgrid { display:grid; grid-template-columns:repeat(4,1fr);
+  gap:11px; max-width:900px; margin:0 auto; }
+.fcard { background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:16px; text-align:left;
+  opacity:0; transform:scale(.91) translateY(10px); transition:.4s; }
+.fcard.vis { opacity:1; transform:none; }
+.fcard-icon { font-size:1.5rem; margin-bottom:8px; }
+.fcard-title { font-size:.82rem; font-weight:700; color:var(--text-1); margin-bottom:3px;
+  font-family:var(--display); }
+.fcard-desc { font-size:.69rem; color:var(--text-3); line-height:1.5; }
+.fcard-tag { font-size:.62rem; color:var(--cyan); font-weight:700;
+  margin-top:9px; display:flex; align-items:center; gap:4px;
+  text-transform:uppercase; letter-spacing:.8px; }
+.pulse-dot { width:5px; height:5px; border-radius:50%;
+  background:var(--green); flex-shrink:0;
+  animation:pdot 1.5s ease-in-out infinite; }
+@keyframes pdot{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+
+/* ══════════════════════════════════════════════
+   KPI GRID
+══════════════════════════════════════════════ */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr);
+  gap:13px; max-width:920px; margin:0 auto 18px; }
+.kpi { background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:20px; text-align:center;
+  opacity:0; transform:translateY(12px); transition:.5s; }
+.kpi.vis { opacity:1; transform:none; }
+.kpi-val { font-family:var(--display); font-size:2.4rem; font-weight:800;
+  line-height:1; margin-bottom:4px; }
+.kpi-lbl { font-size:.68rem; color:var(--text-3); text-transform:uppercase;
+  letter-spacing:1px; }
+.kpi-delta { font-size:.65rem; margin-top:6px; padding:3px 9px;
+  border-radius:20px; display:inline-block; }
+.delta-up { background:rgba(0,232,122,.09); color:#4ADE80; }
+.delta-dn { background:rgba(255,51,85,.09); color:#F87171; }
+
+/* ══════════════════════════════════════════════
+   IMPACT GRID
+══════════════════════════════════════════════ */
+.imp-grid { display:grid; grid-template-columns:repeat(2,1fr);
+  gap:16px; max-width:720px; margin:0 auto; }
+.imp-card { background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:22px;
+  opacity:0; transform:translateY(16px); transition:.5s; }
+.imp-card.vis { opacity:1; transform:none; }
+.imp-lbl { font-size:.65rem; text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--text-3); margin-bottom:10px; }
+.imp-before { font-size:1.15rem; font-weight:700; color:#F87171; }
+.imp-arr { font-size:.9rem; color:rgba(255,255,255,.2); margin:6px 0; }
+.imp-after { font-size:1.15rem; font-weight:700; color:#4ADE80; }
+
+/* ══════════════════════════════════════════════
+   TECH STACK GRID
+══════════════════════════════════════════════ */
+.tech-grid { display:grid; grid-template-columns:repeat(3,1fr);
+  gap:14px; max-width:800px; margin:0 auto; }
+.tech-card { background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:20px; text-align:center;
+  opacity:0; transform:scale(.93); transition:.4s; }
+.tech-card.vis { opacity:1; transform:none; }
+.tech-icon { font-size:2rem; margin-bottom:10px; }
+.tech-name { font-family:var(--display); font-size:.9rem; font-weight:700;
+  color:var(--text-1); margin-bottom:4px; }
+.tech-desc { font-size:.7rem; color:var(--text-3); line-height:1.5; }
+.tech-badge { display:inline-block; margin-top:8px; padding:3px 10px;
+  border-radius:20px; font-size:.62rem; font-weight:700; }
+
+/* ══════════════════════════════════════════════
+   CHART
+══════════════════════════════════════════════ */
+.chart-wrap { display:flex; align-items:flex-end; gap:8px;
+  height:90px; padding:0 10px; }
+.bar-unit { display:flex; flex-direction:column; align-items:center;
+  gap:4px; flex:1; max-width:50px; }
+.bar-body { width:100%; border-radius:5px 5px 0 0;
+  transition:height 1.4s cubic-bezier(.4,0,.2,1); height:0; }
+.bar-lbl { font-size:.58rem; color:var(--text-3); }
+
+/* ══════════════════════════════════════════════
+   STAT HERO
+══════════════════════════════════════════════ */
+.stat-giant { font-family:var(--display);
+  font-size:clamp(5rem,16vw,11rem); font-weight:800;
+  line-height:1; letter-spacing:-4px; }
+
+/* ══════════════════════════════════════════════
+   ANIMATED PIPELINE SVG
+══════════════════════════════════════════════ */
+.pipe-svg { display:block; overflow:visible; }
+.pipe-node-rect { fill:rgba(255,255,255,.038); stroke:rgba(255,255,255,.08); rx:12; }
+.pipe-node-rect-cyan { fill:rgba(0,212,255,.05); stroke:rgba(0,212,255,.18); rx:12; }
+.pipe-line { fill:none; stroke:rgba(0,212,255,.25); stroke-width:1.5;
+  stroke-dasharray:6 4; }
+.pipe-line-anim { animation:dashFlow 2s linear infinite; }
+@keyframes dashFlow { to { stroke-dashoffset:-40; } }
+
+/* ══════════════════════════════════════════════
+   TERMINAL / CODE
+══════════════════════════════════════════════ */
+.terminal { background:#050810; border:1px solid rgba(0,212,255,.12);
+  border-radius:14px; padding:18px 20px; font-family:var(--mono);
+  font-size:.73rem; line-height:1.8; text-align:left;
+  max-width:460px; margin:0 auto; }
+.t-line { opacity:0; transform:translateX(-10px);
+  transition:.3s ease; color:rgba(255,255,255,.55); }
+.t-line.vis { opacity:1; transform:none; }
+.t-key { color:var(--cyan); }
+.t-val { color:#A5F3FC; }
+.t-green { color:var(--green); }
+.t-red { color:var(--red); }
+.t-gray { color:rgba(255,255,255,.3); }
+.cursor-blink { display:inline-block; width:7px; height:13px;
+  background:var(--cyan); border-radius:1px; vertical-align:middle;
+  animation:blink .9s step-end infinite; margin-left:3px; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ══════════════════════════════════════════════
+   TWO-COLUMN LAYOUT
+══════════════════════════════════════════════ */
+.two-col { display:flex; gap:36px; align-items:flex-start;
+  justify-content:center; flex-wrap:wrap; width:100%; }
+.col-label { font-size:.62rem; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--text-3); text-align:center; margin-bottom:8px; }
+
+/* ══════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes scalePop { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
+@keyframes lineGrow { from{width:0} to{width:100%} }
+@keyframes shimmerMove {
+  0%{background-position:200% center}
+  100%{background-position:-200% center}
+}
+.anim-delay-1 { animation-delay:.1s; }
+.anim-delay-2 { animation-delay:.2s; }
+.anim-delay-3 { animation-delay:.35s; }
+.anim-delay-4 { animation-delay:.5s; }
+
+/* orbital rings */
+.ring-deco { position:absolute; border-radius:50%; pointer-events:none; }
+.rd-1 { width:480px; height:480px; border:1px solid rgba(0,212,255,.05);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  animation:spin 25s linear infinite; }
+.rd-2 { width:700px; height:700px; border:1px solid rgba(0,102,255,.04);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  animation:spin 40s linear infinite reverse; }
+@keyframes spin { to { transform:translate(-50%,-50%) rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Ambient -->
+<canvas id="bg-canvas"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-logo">Clinic<span>Care</span></div>
+  <div id="hud-title">INTRO</div>
+  <div id="hud-right">
+    <div id="hud-counter">01 / 12</div>
+    <div id="progress-track"><div id="progress-fill" style="width:0%"></div></div>
+  </div>
+</div>
+<div id="timer-line" style="width:100%"></div>
+<div id="nav-dots"></div>
+<button id="skip-btn" onclick="nextScene()">Skip ›</button>
+
+<!-- ══════════════════════════════════════════════════════
+     S1 — INTRO
+══════════════════════════════════════════════════════ -->
+<div class="scene on" id="s1">
+  <div class="ring-deco rd-1"></div>
+  <div class="ring-deco rd-2"></div>
+  <div class="s-wrap" style="gap:0">
+    <div style="font-size:.72rem;letter-spacing:4px;text-transform:uppercase;
+      color:rgba(0,212,255,.5);font-weight:700;margin-bottom:22px;
+      animation:fadeIn 1s ease-out both">MICROSOFT · AGENTS LEAGUE HACKATHON 2026</div>
+
+    <div style="font-family:'Space Grotesk',sans-serif;
+      font-size:clamp(3.5rem,9vw,7rem);font-weight:800;
+      letter-spacing:-4px;line-height:1;
+      text-shadow:0 0 80px rgba(0,212,255,.2);
+      animation:fadeUp .8s ease-out both">
+      Clinic<span style="color:var(--cyan)">Care</span>
+    </div>
+
+    <div style="font-size:clamp(1rem,2vw,1.3rem);color:rgba(255,255,255,.45);
+      margin-top:16px;letter-spacing:.3px;
+      animation:fadeUp 1s .2s ease-out both">
+      AI-Powered Patient Retention System for Modern Clinics
+    </div>
+
+    <!-- Stats row -->
+    <div style="margin-top:44px;display:flex;gap:0;
+      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+      border-radius:20px;overflow:hidden;
+      animation:fadeUp 1.2s .4s ease-out both">
+      <div style="padding:20px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:800;color:var(--cyan)">7</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">AI Flows</div>
+      </div>
+      <div style="padding:20px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:800;color:var(--cyan)">₹0</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Monthly Cost</div>
+      </div>
+      <div style="padding:20px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:800;color:var(--cyan)">24/7</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Automation</div>
+      </div>
+      <div style="padding:20px 32px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:800;color:var(--cyan)">&lt;30s</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Alert Time</div>
+      </div>
+    </div>
+
+    <!-- Chips -->
+    <div style="margin-top:28px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+      animation:fadeUp 1.2s .65s ease-out both">
+      <span class="chip chip-ms">🤖 Microsoft GitHub Models · DeepSeek-V3-0324</span>
+      <span class="chip chip-hack">🏆 Agents League Hackathon 2026</span>
+      <span class="chip chip-g">⚡ Activepieces Automation</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S2 — THE PROBLEM
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s2">
+  <div class="s-wrap">
+    <div class="label">The Problem</div>
+    <div class="stat-giant gradient-red" id="s2-num">0%</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:clamp(1.1rem,2.5vw,1.7rem);
+      font-weight:600;color:rgba(255,255,255,.6);margin-top:12px;margin-bottom:8px">
+      of clinic patients never return after their first visit
+    </div>
+    <div style="font-size:1rem;color:rgba(255,255,255,.35);margin-bottom:36px">
+      Not because the doctor was bad —<br>
+      <strong style="color:#fff;font-weight:700">because nobody followed up.</strong>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <div class="gc" style="padding:18px 24px">
+        <div style="font-size:1.6rem;margin-bottom:8px">📞</div>
+        <div style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:3px">No Follow-up System</div>
+        <div style="font-size:.72rem;color:var(--text-3)">Doctors too busy to call every patient manually</div>
+      </div>
+      <div class="gc" style="padding:18px 24px">
+        <div style="font-size:1.6rem;margin-bottom:8px">💸</div>
+        <div style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:3px">CRMs Are Expensive</div>
+        <div style="font-size:.72rem;color:var(--text-3)">₹5,000–₹20,000/month — out of reach for small clinics</div>
+      </div>
+      <div class="gc" style="padding:18px 24px">
+        <div style="font-size:1.6rem;margin-bottom:8px">📉</div>
+        <div style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:3px">Revenue Lost Weekly</div>
+        <div style="font-size:.72rem;color:var(--text-3)">Missed reviews, no re-visits, zero patient retention</div>
+      </div>
+      <div class="gc" style="padding:18px 24px">
+        <div style="font-size:1.6rem;margin-bottom:8px">🚨</div>
+        <div style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:3px">Emergencies Undetected</div>
+        <div style="font-size:.72rem;color:var(--text-3)">Critical symptoms go unreported for hours or days</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S3 — SOLUTION OVERVIEW (Animated Pipeline)
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s3">
+  <div class="s-wrap">
+    <div class="label">The Solution</div>
+    <div class="title">One Form. <span class="gradient-text">Seven AI Automations.</span></div>
+    <div class="subtitle" style="margin-bottom:28px">
+      Receptionist submits patient data → Google Sheets → Activepieces fires 7 intelligent flows
+    </div>
+
+    <!-- Animated SVG pipeline -->
+    <div style="width:100%;max-width:800px;margin:0 auto 24px">
+      <svg class="pipe-svg" viewBox="0 0 780 80" width="100%" height="80">
+        <!-- nodes -->
+        <rect class="pipe-node-rect" x="10" y="16" width="130" height="48" rx="12"/>
+        <text x="75" y="38" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="11" font-family="Inter">📋</text>
+        <text x="75" y="54" text-anchor="middle" fill="rgba(0,212,255,.7)" font-size="9" font-family="Inter" font-weight="700">GOOGLE FORM</text>
+
+        <rect class="pipe-node-rect" x="175" y="16" width="130" height="48" rx="12"/>
+        <text x="240" y="38" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="11" font-family="Inter">📊</text>
+        <text x="240" y="54" text-anchor="middle" fill="rgba(0,212,255,.7)" font-size="9" font-family="Inter" font-weight="700">GOOGLE SHEETS</text>
+
+        <rect class="pipe-node-rect" x="340" y="16" width="130" height="48" rx="12"/>
+        <text x="405" y="38" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="11" font-family="Inter">⚡</text>
+        <text x="405" y="54" text-anchor="middle" fill="rgba(0,212,255,.7)" font-size="9" font-family="Inter" font-weight="700">ACTIVEPIECES</text>
+
+        <!-- AI node highlighted -->
+        <rect class="pipe-node-rect-cyan" x="505" y="10" width="150" height="60" rx="14"
+          style="filter:drop-shadow(0 0 12px rgba(0,212,255,.25))"/>
+        <text x="580" y="34" text-anchor="middle" fill="rgba(255,255,255,.8)" font-size="12" font-family="Inter">🤖</text>
+        <text x="580" y="50" text-anchor="middle" fill="var(--cyan)" font-size="9" font-family="Inter" font-weight="800">7 AI FLOWS</text>
+        <text x="580" y="62" text-anchor="middle" fill="rgba(0,212,255,.5)" font-size="8" font-family="Inter">DeepSeek-V3</text>
+
+        <!-- Connecting lines with flowing dash animation -->
+        <line class="pipe-line pipe-line-anim" x1="140" y1="40" x2="175" y2="40"/>
+        <line class="pipe-line pipe-line-anim" x1="305" y1="40" x2="340" y2="40" style="animation-delay:.5s"/>
+        <line class="pipe-line pipe-line-anim" x1="470" y1="40" x2="505" y2="40" style="animation-delay:1s"/>
+      </svg>
+    </div>
+
+    <!-- 7 flow cards -->
+    <div class="fgrid">
+      <div class="fcard" id="fc1">
+        <div class="fcard-icon">💬</div>
+        <div class="fcard-title">WhatsApp Follow-up</div>
+        <div class="fcard-desc">Personalized patient follow-up sent automatically at 9 AM every day</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 1</div>
+      </div>
+      <div class="fcard" id="fc2">
+        <div class="fcard-icon">🧠</div>
+        <div class="fcard-title">AI Sentiment Analysis</div>
+        <div class="fcard-desc">DeepSeek-V3 reads patient replies and classifies health sentiment instantly</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 2</div>
+      </div>
+      <div class="fcard" id="fc3">
+        <div class="fcard-icon">⭐</div>
+        <div class="fcard-title">Review Automation</div>
+        <div class="fcard-desc">Happy patients automatically receive a Google review request after 30 min</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 3</div>
+      </div>
+      <div class="fcard" id="fc4">
+        <div class="fcard-icon">🚨</div>
+        <div class="fcard-title">Emergency Alert</div>
+        <div class="fcard-desc">Critical symptoms trigger an instant WhatsApp alert to the doctor</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 4</div>
+      </div>
+      <div class="fcard" id="fc5">
+        <div class="fcard-icon">📅</div>
+        <div class="fcard-title">Smart Reminders</div>
+        <div class="fcard-desc">Context-aware follow-up appointment reminders based on treatment type</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 5</div>
+      </div>
+      <div class="fcard" id="fc6">
+        <div class="fcard-icon">💊</div>
+        <div class="fcard-title">Prescription Summary</div>
+        <div class="fcard-desc">AI converts complex prescriptions into clear, patient-friendly instructions</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 6</div>
+      </div>
+      <div class="fcard" id="fc7">
+        <div class="fcard-icon">📊</div>
+        <div class="fcard-title">Live Dashboard</div>
+        <div class="fcard-desc">Real-time retention metrics, sentiment trends and review counts</div>
+        <div class="fcard-tag"><span class="pulse-dot"></span> FLOW 7</div>
+      </div>
+      <div class="fcard" id="fc8" style="background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.18)">
+        <div class="fcard-icon">🆓</div>
+        <div class="fcard-title" style="color:var(--cyan)">Zero Cost Forever</div>
+        <div class="fcard-desc">100% free tiers — GitHub Models, Activepieces, Google Workspace, WhatsApp API</div>
+        <div class="fcard-tag" style="color:var(--amber)"><span class="pulse-dot" style="background:var(--amber)"></span> FREE TIER</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S4 — PATIENT DATA CAPTURE
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s4">
+  <div class="s-wrap">
+    <div class="label">Flow 1 — Data Capture</div>
+    <div class="title" style="font-size:clamp(1.5rem,3.5vw,2.6rem)">
+      Receptionist fills a form.<br><span class="gradient-text">Everything else runs itself.</span>
+    </div>
+    <div style="margin-top:28px;display:flex;gap:32px;align-items:flex-start;
+      justify-content:center;flex-wrap:wrap">
+
+      <!-- Form mockup -->
+      <div>
+        <div class="col-label">Patient Intake Form</div>
+        <div class="gc-cyan" style="padding:22px;width:290px;text-align:left">
+          <div style="font-size:.65rem;color:var(--cyan);letter-spacing:2px;
+            font-weight:700;text-transform:uppercase;margin-bottom:16px">
+            📋 Smile Clinic · Patient Form
+          </div>
+          <div id="s4-fields" style="display:flex;flex-direction:column;gap:11px"></div>
+          <div id="s4-submit" style="margin-top:16px;background:var(--blue);border-radius:10px;
+            padding:10px;text-align:center;font-size:.8rem;font-weight:700;
+            opacity:0;transition:.4s;">
+            ✅ Submitted → Synced to Google Sheets
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div id="s4-arr" style="font-size:2rem;color:rgba(0,212,255,.35);
+        padding-top:72px;opacity:0;transition:.5s">
+        <svg width="40" height="20" viewBox="0 0 40 20">
+          <path d="M0 10 L32 10 M26 4 L32 10 L26 16" stroke="rgba(0,212,255,.5)"
+            stroke-width="2" fill="none" stroke-linecap="round"/>
+          <animateTransform attributeName="transform" type="translate"
+            values="0,0;6,0;0,0" dur="1.5s" repeatCount="indefinite"/>
+        </svg>
+      </div>
+
+      <!-- Sheet mockup -->
+      <div>
+        <div class="col-label">Google Sheets · Auto-Synced</div>
+        <div class="gc" style="width:320px;overflow:hidden;padding:0">
+          <div style="padding:10px 16px;background:rgba(0,232,122,.05);
+            border-bottom:1px solid rgba(0,232,122,.12);font-size:.68rem;
+            color:#4ADE80;font-weight:700;letter-spacing:1px">
+            📊 PATIENT_DATA · Live
+          </div>
+          <table id="s4-table" style="width:100%;border-collapse:collapse;font-size:.71rem">
+            <thead>
+              <tr style="background:rgba(255,255,255,.03)">
+                <th style="padding:8px 12px;color:var(--text-3);font-weight:500;text-align:left">Patient</th>
+                <th style="padding:8px 12px;color:var(--text-3);font-weight:500;text-align:left">Treatment</th>
+                <th style="padding:8px 12px;color:var(--text-3);font-weight:500;text-align:left">Status</th>
+              </tr>
+            </thead>
+            <tbody id="s4-tbody"></tbody>
+          </table>
+          <div id="s4-trigger" style="padding:10px 14px;border-top:1px solid var(--border);
+            font-size:.65rem;color:rgba(0,212,255,.5);font-family:'JetBrains Mono',monospace;
+            opacity:0;transition:.4s">
+            ⚡ trigger: new_row → 7 flows initialized...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S5 — WHATSAPP FOLLOW-UP
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s5">
+  <div class="s-wrap">
+    <div class="label">Flow 2 — Automated Follow-up</div>
+    <div class="title" style="font-size:clamp(1.5rem,3.5vw,2.5rem)">
+      9 AM. Patient receives a<br><span class="gradient-text">personal message.</span>
+    </div>
+    <div style="margin-top:24px" class="two-col">
+      <div>
+        <div class="col-label">Patient's WhatsApp</div>
+        <div class="phone">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div class="phone-bar">
+            <div class="phone-ava" style="background:linear-gradient(135deg,var(--blue),#003399)">🏥</div>
+            <div>
+              <div class="phone-name">Smile Clinic</div>
+              <div class="phone-status">WhatsApp Business · online</div>
+            </div>
+          </div>
+          <div class="phone-body" id="s5-body"></div>
+        </div>
+      </div>
+      <div style="text-align:left;max-width:275px;padding-top:26px">
+        <div class="col-label" style="text-align:left">Automation trigger chain</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div class="fn fn-cyan" id="fn1" style="width:100%">
+            <div class="fn-cap">09:00 AM Daily</div>
+            <div class="fn-icon">⏰</div>
+            <div class="fn-txt">Activepieces scheduler triggers — scans uncontacted patients</div>
+          </div>
+          <div class="fn-arrow vis" style="margin-left:42px">↓</div>
+          <div class="fn" id="fn2" style="width:100%">
+            <div class="fn-cap">Personalization</div>
+            <div class="fn-icon">🤖</div>
+            <div class="fn-txt">Patient name, treatment + visit date fetched from Google Sheets</div>
+          </div>
+          <div class="fn-arrow vis" style="margin-left:42px">↓</div>
+          <div class="fn fn-cyan" id="fn3" style="width:100%">
+            <div class="fn-cap">WhatsApp API</div>
+            <div class="fn-icon">💬</div>
+            <div class="fn-txt">Meta Business API · message delivered ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S6 — AI ANALYSIS (POSITIVE)
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s6">
+  <div class="s-wrap">
+    <div class="label">Flow 3 — AI Intelligence</div>
+    <div class="title" style="font-size:clamp(1.4rem,3.5vw,2.4rem)">
+      Patient replies.<br><span class="gradient-text">Microsoft AI understands instantly.</span>
+    </div>
+    <div style="margin-top:20px" class="two-col">
+      <div>
+        <div class="col-label">Patient's Reply</div>
+        <div class="phone">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div class="phone-bar">
+            <div class="phone-ava" style="background:linear-gradient(135deg,var(--blue),#003399)">🏥</div>
+            <div>
+              <div class="phone-name">Smile Clinic</div>
+              <div class="phone-status">WhatsApp Business</div>
+            </div>
+          </div>
+          <div class="phone-body" id="s6-body"></div>
+        </div>
+      </div>
+      <div class="ai-panel" style="margin-top:26px">
+        <div style="font-size:.62rem;color:var(--text-3);letter-spacing:2px;
+          text-transform:uppercase;margin-bottom:14px;font-family:'JetBrains Mono',monospace">
+          DeepSeek-V3 · Analysis
+        </div>
+        <div class="ai-model-row">
+          <span style="font-size:1.3rem">🤖</span>
+          <div>
+            <div class="ai-name">DeepSeek-V3-0324</div>
+            <div class="ai-sub">via Microsoft GitHub Models API · Free tier</div>
+          </div>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-outer">
+            <svg viewBox="0 0 72 72" width="72" height="72">
+              <circle class="ring-bg-c" cx="36" cy="36" r="30"/>
+              <circle class="ring-fg-c" id="ring-fg" cx="36" cy="36" r="30" stroke="var(--green)"/>
+            </svg>
+            <div class="ring-label" id="ring-pct" style="color:var(--green)">0%</div>
+          </div>
+          <div style="text-align:left">
+            <div style="font-size:.65rem;color:var(--text-3);margin-bottom:4px">Confidence</div>
+            <div style="font-size:.72rem;color:#4ADE80;font-weight:700" id="ring-status">Analyzing...</div>
+            <div style="font-size:.62rem;color:var(--text-3);margin-top:3px" id="ring-lang">Language: detecting</div>
+          </div>
+        </div>
+        <div class="ai-bar-row">
+          <div class="ai-bar-label-row">
+            <span>Language Detection</span>
+            <span class="ai-bar-pct" id="bp1" style="color:var(--cyan)">0%</span>
+          </div>
+          <div class="ai-track"><div class="ai-fill" id="af1" style="background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+        </div>
+        <div class="ai-bar-row">
+          <div class="ai-bar-label-row">
+            <span>Semantic Understanding</span>
+            <span class="ai-bar-pct" id="bp2" style="color:var(--purple)">0%</span>
+          </div>
+          <div class="ai-track"><div class="ai-fill" id="af2" style="background:linear-gradient(90deg,var(--purple),#EC4899)"></div></div>
+        </div>
+        <div class="ai-bar-row">
+          <div class="ai-bar-label-row">
+            <span>Sentiment Classification</span>
+            <span class="ai-bar-pct" id="bp3" style="color:var(--green)">0%</span>
+          </div>
+          <div class="ai-track"><div class="ai-fill" id="af3" style="background:linear-gradient(90deg,#059669,var(--green))"></div></div>
+        </div>
+        <div class="ai-result ai-result-pos" id="ai-pos">
+          ✅ POSITIVE — Patient recovering well
+          <div class="ai-meta-sm">aiUsed: true · confidence: 97% · 312ms</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S7 — POSITIVE ACTIONS
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s7">
+  <div class="s-wrap">
+    <div style="margin-bottom:10px">
+      <span class="chip chip-g">✅ Positive Path — Patient is recovering well</span>
+    </div>
+    <div class="title" style="font-size:clamp(1.4rem,3.5vw,2.4rem)">
+      Empathy first. <span class="gradient-text">Google review</span> second.
+    </div>
+    <div style="margin-top:20px" class="two-col">
+      <div>
+        <div class="col-label">Patient Receives</div>
+        <div class="phone">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div class="phone-bar">
+            <div class="phone-ava" style="background:linear-gradient(135deg,var(--blue),#003399)">🏥</div>
+            <div>
+              <div class="phone-name">Smile Clinic</div>
+              <div class="phone-status">WhatsApp Business</div>
+            </div>
+          </div>
+          <div class="phone-body" id="s7-body"></div>
+        </div>
+      </div>
+      <div style="text-align:left;max-width:275px;padding-top:26px">
+        <div class="col-label" style="text-align:left">Actions executed</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div class="fn fn-pos" id="p1" style="width:100%">
+            <div class="fn-icon">🧠</div>
+            <div class="fn-txt"><strong style="color:#4ADE80">POSITIVE</strong> classified · aiUsed: true · 97%</div>
+          </div>
+          <div class="fn-arrow vis" style="margin-left:42px">↓</div>
+          <div class="fn" id="p2" style="width:100%">
+            <div class="fn-icon">💚</div>
+            <div class="fn-txt">Empathy message sent immediately via WhatsApp API</div>
+          </div>
+          <div class="fn-arrow vis" style="margin-left:42px">↓</div>
+          <div class="fn" id="p3" style="width:100%">
+            <div class="fn-icon">⏱</div>
+            <div class="fn-txt">30-minute delay node set in Activepieces flow</div>
+          </div>
+          <div class="fn-arrow vis" style="margin-left:42px">↓</div>
+          <div class="fn fn-cyan" id="p4" style="width:100%">
+            <div class="fn-icon">⭐</div>
+            <div class="fn-txt">Google review request sent · patient retention +1 ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S8 — EMERGENCY ALERT
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s8">
+  <div class="s-wrap">
+    <div style="margin-bottom:10px">
+      <span class="chip chip-r">🚨 Critical Path — Severe symptoms reported</span>
+    </div>
+    <div class="title" style="font-size:clamp(1.4rem,3.5vw,2.4rem)">
+      AI detects <span class="gradient-red">danger.</span><br>Doctor alerted in under 30 seconds.
+    </div>
+    <div style="margin-top:20px" class="two-col">
+      <div>
+        <div class="col-label">Patient Reports</div>
+        <div class="phone">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div class="phone-bar">
+            <div class="phone-ava" style="background:linear-gradient(135deg,var(--blue),#003399)">🏥</div>
+            <div>
+              <div class="phone-name">Smile Clinic</div>
+              <div class="phone-status">WhatsApp Business</div>
+            </div>
+          </div>
+          <div class="phone-body" id="s8-pat"></div>
+        </div>
+      </div>
+      <div>
+        <div class="col-label">Doctor's Emergency Alert</div>
+        <div class="phone" id="doc-phone" style="
+          box-shadow:0 0 0 1px rgba(255,51,85,.2),
+          0 40px 80px rgba(255,51,85,.25),
+          inset 0 1px 0 rgba(255,51,85,.1);
+          animation:redPulse 1.8s ease-in-out infinite">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div style="background:linear-gradient(135deg,#7F1D1D,#991B1B);
+            padding:14px;text-align:center;
+            border-bottom:1px solid rgba(255,51,85,.3)">
+            <div style="font-size:1.5rem">🚨</div>
+            <div style="font-size:.8rem;font-weight:800;color:#FCA5A5;margin-top:3px">EMERGENCY ALERT</div>
+            <div style="font-size:.62rem;color:rgba(252,165,165,.5);margin-top:1px">AUTO-GENERATED · ClinicCare AI</div>
+          </div>
+          <div class="phone-body" id="s8-doc"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S9 — PRESCRIPTION AI
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s9">
+  <div class="s-wrap">
+    <div class="label">Flow 6 — AI Prescription Summary</div>
+    <div class="title" style="font-size:clamp(1.4rem,3.5vw,2.4rem)">
+      Medical jargon → <span class="gradient-text">Patient-friendly instructions.</span>
+    </div>
+    <div style="margin-top:24px" class="two-col" style="align-items:center">
+      <!-- Before -->
+      <div>
+        <div class="col-label">Doctor's Prescription</div>
+        <div class="gc" style="padding:20px;width:240px;text-align:left">
+          <div style="font-size:.65rem;color:var(--text-3);margin-bottom:12px;
+            text-transform:uppercase;letter-spacing:1px">Rx — Medical notation</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;
+            color:rgba(255,255,255,.5);line-height:2">
+            Tab Amoxicillin 500mg<br>
+            <span style="color:rgba(255,255,255,.3)">TDS × 5 days AC</span><br>
+            Tab Ibuprofen 400mg<br>
+            <span style="color:rgba(255,255,255,.3)">BD × 3 days PC</span><br>
+            Betadine Gargle<br>
+            <span style="color:rgba(255,255,255,.3)">BD × 7 days</span><br>
+            <span style="color:rgba(255,255,255,.2)">SOS: Paracetamol 650</span>
+          </div>
+        </div>
+      </div>
+      <!-- Transform arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:.65rem;color:rgba(0,212,255,.5);font-weight:700;
+          letter-spacing:1px;font-family:'JetBrains Mono',monospace">DeepSeek-V3</div>
+        <svg width="50" height="24" viewBox="0 0 50 24" style="overflow:visible">
+          <path d="M0 12 L42 12 M34 5 L42 12 L34 19" stroke="rgba(0,212,255,.5)"
+            stroke-width="2" fill="none" stroke-linecap="round"/>
+          <animateTransform attributeName="transform" type="translate"
+            values="0,0;8,0;0,0" dur="1.8s" repeatCount="indefinite"/>
+        </svg>
+        <div style="font-size:.62rem;color:rgba(255,255,255,.25)">translating...</div>
+      </div>
+      <!-- After - Phone -->
+      <div>
+        <div class="col-label">Patient Receives on WhatsApp</div>
+        <div class="phone">
+          <div class="phone-island"><div class="phone-island-pill"></div></div>
+          <div class="phone-bar">
+            <div class="phone-ava" style="background:linear-gradient(135deg,var(--blue),#003399)">🏥</div>
+            <div>
+              <div class="phone-name">Smile Clinic</div>
+              <div class="phone-status">WhatsApp Business</div>
+            </div>
+          </div>
+          <div class="phone-body" id="s9-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S10 — LIVE DASHBOARD
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s10">
+  <div class="s-wrap" style="max-width:980px">
+    <div class="label">Flow 7 — Live Dashboard</div>
+    <div class="title" style="font-size:clamp(1.4rem,3.5vw,2.2rem);margin-bottom:22px">
+      Real-time clinic intelligence. <span class="gradient-text">Zero manual work.</span>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi" id="k1">
+        <div class="kpi-val gradient-text" id="kv1">0</div>
+        <div class="kpi-lbl">Patients Followed Up</div>
+        <div class="kpi-delta delta-up">↑ 23% vs last week</div>
+      </div>
+      <div class="kpi" id="k2">
+        <div class="kpi-val" style="color:var(--green)" id="kv2">0%</div>
+        <div class="kpi-lbl">Response Rate</div>
+        <div class="kpi-delta delta-up">↑ from 0% (manual)</div>
+      </div>
+      <div class="kpi" id="k3">
+        <div class="kpi-val" style="color:var(--amber)" id="kv3">0</div>
+        <div class="kpi-lbl">New Google Reviews</div>
+        <div class="kpi-delta delta-up">↑ 340% this month</div>
+      </div>
+      <div class="kpi" id="k4">
+        <div class="kpi-val" style="color:var(--red)" id="kv4">0</div>
+        <div class="kpi-lbl">Critical Alerts Handled</div>
+        <div class="kpi-delta delta-dn">All resolved in &lt;30s</div>
+      </div>
+    </div>
+    <div class="gc" style="padding:20px;max-width:700px;margin:0 auto;width:100%">
+      <div style="font-size:.65rem;color:var(--text-3);letter-spacing:1.5px;
+        text-transform:uppercase;margin-bottom:14px;text-align:left">
+        Weekly Follow-up Responses
+      </div>
+      <div class="chart-wrap" id="chart-wrap"></div>
+      <div style="display:flex;justify-content:space-around;margin-top:6px">
+        <div style="font-size:.58rem;color:var(--text-3)">Mon</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Tue</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Wed</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Thu</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Fri</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Sat</div>
+        <div style="font-size:.58rem;color:var(--text-3)">Sun</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S11 — TECH STACK
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s11">
+  <div class="s-wrap">
+    <div class="label">Powered By</div>
+    <div class="title" style="font-size:clamp(1.5rem,3.5vw,2.6rem);margin-bottom:8px">
+      Built on the<br><span class="gradient-text">Microsoft AI Ecosystem</span>
+    </div>
+    <div class="subtitle" style="margin-bottom:32px">
+      Enterprise-grade AI + free-tier tools = a system any clinic can afford
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card" id="tc1">
+        <div class="tech-icon">🤖</div>
+        <div class="tech-name">Microsoft GitHub Models</div>
+        <div class="tech-desc">DeepSeek-V3-0324 for multilingual sentiment analysis and prescription summarization</div>
+        <span class="tech-badge chip-ms">Free Tier · Hackathon Ready</span>
+      </div>
+      <div class="tech-card" id="tc2">
+        <div class="tech-icon">⚡</div>
+        <div class="tech-name">Activepieces</div>
+        <div class="tech-desc">Open-source automation platform powering all 7 flows — scheduler, conditional logic, delay nodes</div>
+        <span class="tech-badge chip-g">Open Source · Self-hosted</span>
+      </div>
+      <div class="tech-card" id="tc3">
+        <div class="tech-icon">💬</div>
+        <div class="tech-name">WhatsApp Business API</div>
+        <div class="tech-desc">Meta Business API for two-way patient communication — follow-ups, alerts, prescription summaries</div>
+        <span class="tech-badge chip-p">Meta Business · Verified</span>
+      </div>
+      <div class="tech-card" id="tc4">
+        <div class="tech-icon">📊</div>
+        <div class="tech-name">Google Workspace</div>
+        <div class="tech-desc">Google Forms for data capture, Google Sheets as the database — zero setup cost</div>
+        <span class="tech-badge chip-g">Free Tier · Familiar UI</span>
+      </div>
+      <div class="tech-card" id="tc5">
+        <div class="tech-icon">🌐</div>
+        <div class="tech-name">Multilingual AI</div>
+        <div class="tech-desc">Understands English, regional languages, and mixed-language responses with 97%+ accuracy</div>
+        <span class="tech-badge chip-ms">DeepSeek-V3 · Multilingual</span>
+      </div>
+      <div class="tech-card" id="tc6" style="background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.15)">
+        <div class="tech-icon">💰</div>
+        <div class="tech-name">Total Monthly Cost</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.4rem;font-weight:800;
+          color:var(--cyan);margin:8px 0">₹0</div>
+        <div class="tech-desc">100% free tiers. No hidden costs. Works for clinics of any size.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S12 — IMPACT
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s12">
+  <div class="s-wrap">
+    <div class="label">Real Impact</div>
+    <div class="title" style="font-size:clamp(1.6rem,4vw,3rem);margin-bottom:8px">
+      Built in one weekend.<br><span class="gradient-text">Runs forever, for free.</span>
+    </div>
+    <div style="margin-top:24px">
+      <div class="imp-grid">
+        <div class="imp-card" id="ic1">
+          <div class="imp-lbl">Patient Follow-up Coverage</div>
+          <div class="imp-before">❌ 0% — never happened manually</div>
+          <div class="imp-arr">↓</div>
+          <div class="imp-after">✅ 100% — every patient, every time</div>
+        </div>
+        <div class="imp-card" id="ic2">
+          <div class="imp-lbl">Monthly CRM Cost</div>
+          <div class="imp-before">❌ ₹5,000 – ₹20,000 / month</div>
+          <div class="imp-arr">↓</div>
+          <div class="imp-after">✅ ₹0 — zero cost, forever</div>
+        </div>
+        <div class="imp-card" id="ic3">
+          <div class="imp-lbl">Emergency Response Time</div>
+          <div class="imp-before">❌ Hours — if noticed at all</div>
+          <div class="imp-arr">↓</div>
+          <div class="imp-after">✅ &lt;30 seconds — fully automatic</div>
+        </div>
+        <div class="imp-card" id="ic4">
+          <div class="imp-lbl">Google Reviews Generated</div>
+          <div class="imp-before">❌ 0–1 per month (manual ask)</div>
+          <div class="imp-arr">↓</div>
+          <div class="imp-after">✅ 10–30 per month — automated</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:28px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <span class="chip chip-ms">🤖 Microsoft GitHub Models</span>
+      <span class="chip chip-hack">🏆 Agents League 2026</span>
+      <span class="chip chip-g">🌍 Works for Any Clinic</span>
+      <span class="chip chip-p">⚡ 5-Minute Setup</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     S13 — OUTRO
+══════════════════════════════════════════════════════ -->
+<div class="scene" id="s13">
+  <div class="ring-deco rd-1"></div>
+  <div class="ring-deco rd-2"></div>
+  <div style="position:absolute;width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,212,255,.1),transparent 65%);
+    top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none"></div>
+  <div class="s-wrap">
+    <div style="font-size:.72rem;letter-spacing:4px;text-transform:uppercase;
+      color:rgba(0,212,255,.45);margin-bottom:20px;animation:fadeIn 1s ease-out both">
+      Thank You — Microsoft Agents League 2026
+    </div>
+    <div style="font-family:'Space Grotesk',sans-serif;
+      font-size:clamp(3rem,8vw,6.5rem);font-weight:800;
+      letter-spacing:-3.5px;line-height:1;
+      text-shadow:0 0 80px rgba(0,212,255,.25);
+      animation:fadeUp .8s ease-out both">
+      Clinic<span style="color:var(--cyan)">Care</span>
+    </div>
+    <div style="font-size:clamp(.95rem,2vw,1.2rem);color:rgba(255,255,255,.4);
+      margin-top:16px;animation:fadeUp 1s .2s ease-out both">
+      Turning every clinic visit into a lasting patient relationship.
+    </div>
+    <!-- Big numbers -->
+    <div style="margin-top:44px;display:flex;gap:0;
+      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+      border-radius:22px;overflow:hidden;
+      animation:fadeUp 1.2s .4s ease-out both">
+      <div style="padding:22px 36px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.6rem;font-weight:800;color:var(--cyan)">7</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:4px">AI Flows</div>
+      </div>
+      <div style="padding:22px 36px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.6rem;font-weight:800;color:var(--cyan)">₹0</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:4px">Monthly Cost</div>
+      </div>
+      <div style="padding:22px 36px;text-align:center;border-right:1px solid rgba(255,255,255,.07)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.6rem;font-weight:800;color:var(--cyan)">100%</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:4px">Follow-up Rate</div>
+      </div>
+      <div style="padding:22px 36px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:2.6rem;font-weight:800;color:var(--cyan)">&lt;30s</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:4px">Alert Response</div>
+      </div>
+    </div>
+    <div style="margin-top:30px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+      animation:fadeUp 1.2s .6s ease-out both">
+      <span class="chip chip-ms">🤖 Microsoft GitHub Models · DeepSeek-V3</span>
+      <span class="chip chip-hack">🏆 Agents League Hackathon 2026</span>
+      <span class="chip chip-g">⚡ Activepieces · WhatsApp API</span>
+    </div>
+    <div style="margin-top:40px;font-size:.75rem;color:rgba(255,255,255,.18);
+      font-family:'JetBrains Mono',monospace;animation:fadeIn 1s .9s ease-out both">
+      Built by Kasif Shaikh · ClinicCare v6.0 · Smile Clinic Demo
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes redPulse {
+    0%,100%{box-shadow:0 0 0 1px rgba(255,51,85,.2),0 40px 80px rgba(255,51,85,.25)}
+    50%{box-shadow:0 0 0 2px rgba(255,51,85,.45),0 40px 80px rgba(255,51,85,.5)}
+  }
+</style>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
+<script>
+/* ── CONFIG ── */
+const SCENES = [
+  {id:'s1',  dur:7500,  title:'INTRO'},
+  {id:'s2',  dur:7000,  title:'THE PROBLEM'},
+  {id:'s3',  dur:9000,  title:'7 AI FLOWS'},
+  {id:'s4',  dur:8500,  title:'DATA CAPTURE'},
+  {id:'s5',  dur:9000,  title:'WHATSAPP FOLLOW-UP'},
+  {id:'s6',  dur:9000,  title:'AI ANALYSIS'},
+  {id:'s7',  dur:9000,  title:'POSITIVE PATH'},
+  {id:'s8',  dur:9500,  title:'EMERGENCY ALERT'},
+  {id:'s9',  dur:8500,  title:'PRESCRIPTION AI'},
+  {id:'s10', dur:9000,  title:'LIVE DASHBOARD'},
+  {id:'s11', dur:8000,  title:'TECH STACK'},
+  {id:'s12', dur:8500,  title:'IMPACT'},
+  {id:'s13', dur:10000, title:'OUTRO'},
+];
+let cur = 0, autoTimer = null;
+
+/* ── PARTICLE CANVAS ── */
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+const pts = [];
+function resizeCvs() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resizeCvs(); addEventListener('resize', resizeCvs);
+for(let i = 0; i < 80; i++) pts.push({
+  x: Math.random()*2000, y: Math.random()*1200,
+  vx: (Math.random()-.5)*.2, vy: (Math.random()-.5)*.2,
+  r: Math.random()*1.4+.3, o: Math.random()*.4+.08,
+  c: Math.random()<.65?'0,212,255':'0,102,255'
+});
+function drawBg() {
+  ctx.clearRect(0,0,W,H);
+  // faint grid
+  ctx.strokeStyle='rgba(0,212,255,.018)'; ctx.lineWidth=.5;
+  for(let x=0;x<W;x+=90){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=90){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  pts.forEach(p => {
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${p.c},${p.o})`; ctx.fill();
+  });
+  pts.forEach((a,i) => pts.slice(i+1).forEach(b => {
+    const d = Math.hypot(a.x-b.x, a.y-b.y);
+    if(d<110){
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=`rgba(0,212,255,${.06*(1-d/110)})`;
+      ctx.lineWidth=.5; ctx.stroke();
+    }
+  }));
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+/* ── NAV DOTS ── */
+const dotsEl = document.getElementById('nav-dots');
+SCENES.forEach((_,i) => {
+  const d = document.createElement('div');
+  d.className = 'nd' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+function syncDots() {
+  document.querySelectorAll('.nd').forEach((d,i) => {
+    d.className = 'nd' + (i===cur?' on':'');
+  });
+}
+
+/* ── TIMER BAR ── */
+function startTimer(dur) {
+  const t = document.getElementById('timer-line');
+  t.style.transition = 'none'; t.style.width = '100%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      t.style.transition = `width ${dur}ms linear`;
+      t.style.width = '0%';
+    });
+  });
+}
+
+/* ── SCENE NAVIGATION ── */
+function goTo(n) {
+  clearTimeout(autoTimer);
+  const prev = SCENES[cur];
+  document.getElementById(prev.id).classList.remove('on');
+  cur = n;
+  const next = SCENES[cur];
+  document.getElementById(next.id).classList.add('on');
+  document.getElementById('hud-title').textContent = next.title;
+  document.getElementById('hud-counter').textContent =
+    String(cur+1).padStart(2,'0') + ' / ' + String(SCENES.length).padStart(2,'0');
+  document.getElementById('progress-fill').style.width =
+    ((cur+1)/SCENES.length*100) + '%';
+  syncDots();
+  startTimer(next.dur);
+  autoTimer = setTimeout(() => { if(cur < SCENES.length-1) nextScene(); }, next.dur);
+  if(inits[cur]) inits[cur]();
+}
+function nextScene() { if(cur<SCENES.length-1) goTo(cur+1); }
+
+/* ── HELPERS ── */
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+function addMsg(bodyId, cls, html, ms = 0) {
+  return new Promise(r => setTimeout(() => {
+    const b = document.getElementById(bodyId); if(!b) return r();
+    const m = document.createElement('div');
+    m.className = 'msg ' + cls; m.innerHTML = html;
+    b.appendChild(m);
+    requestAnimationFrame(() => m.classList.add('vis'));
+    b.scrollTop = b.scrollHeight; r();
+  }, ms));
+}
+function addTyping(bodyId, ms = 0) {
+  return new Promise(r => setTimeout(() => {
+    const b = document.getElementById(bodyId); if(!b) return r();
+    const t = document.createElement('div');
+    t.className = 'typing'; t.id = 'typ-' + bodyId;
+    t.innerHTML = '<span></span><span></span><span></span>';
+    b.appendChild(t); b.scrollTop = b.scrollHeight; r();
+  }, ms));
+}
+function removeTyping(bodyId) {
+  const t = document.getElementById('typ-' + bodyId); if(t) t.remove();
+}
+function showEl(id, ms = 0) {
+  return new Promise(r => setTimeout(() => {
+    const el = document.getElementById(id);
+    if(el) { el.style.opacity='1'; el.style.transform='none'; }
+    r();
+  }, ms));
+}
+function animBar(fillId, pctId, pct, ms = 0) {
+  setTimeout(() => {
+    const f = document.getElementById(fillId); if(f) f.style.width = pct + '%';
+    if(pctId) {
+      let v = 0;
+      const iv = setInterval(() => {
+        v = Math.min(v+2, pct);
+        const p = document.getElementById(pctId);
+        if(p) p.textContent = v + '%';
+        if(v >= pct) clearInterval(iv);
+      }, 22);
+    }
+  }, ms);
+}
+function animRing(pct, ms = 0) {
+  setTimeout(() => {
+    const circ = 2 * Math.PI * 30;
+    const offset = circ * (1 - pct/100);
+    const r = document.getElementById('ring-fg'); if(r) r.style.strokeDashoffset = offset;
+    let v = 0;
+    const iv = setInterval(() => {
+      v = Math.min(v+2, pct);
+      const l = document.getElementById('ring-pct'); if(l) l.textContent = v + '%';
+      if(v >= pct) clearInterval(iv);
+    }, 18);
+  }, ms);
+}
+function animCounter(id, target, suffix='', ms=0, dur=1600) {
+  setTimeout(() => {
+    const el = document.getElementById(id); if(!el) return;
+    let start = null;
+    const step = ts => {
+      if(!start) start = ts;
+      const p = Math.min((ts-start)/dur, 1);
+      const e = 1 - Math.pow(1-p, 3);
+      el.textContent = Math.round(e*target) + suffix;
+      if(p<1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, ms);
+}
+function addClass(id, cls, ms=0) {
+  setTimeout(() => {
+    const el = document.getElementById(id); if(el) el.classList.add(cls);
+  }, ms);
+}
+
+/* ── SCENE INITS ── */
+const inits = {};
+
+// S2 — Problem counter
+inits[1] = () => {
+  const el = document.getElementById('s2-num');
+  let v = 0;
+  const iv = setInterval(() => {
+    v = Math.min(v+1, 68); el.textContent = v + '%';
+    if(v>=68) clearInterval(iv);
+  }, 35);
+};
+
+// S3 — Stagger flow cards
+inits[2] = () => {
+  ['fc1','fc2','fc3','fc4','fc5','fc6','fc7','fc8'].forEach((id,i) => {
+    addClass(id, 'vis', 180 + i*130);
+  });
+};
+
+// S4 — Form + sheet animation
+inits[3] = async () => {
+  const fields = [
+    {l:'Patient Name',v:'Rahul Sharma'},
+    {l:'Mobile Number',v:'+91 98765 43210'},
+    {l:'Treatment Done',v:'Root Canal Therapy'},
+    {l:'Visit Date',v:'30 May 2026'},
+  ];
+  const cont = document.getElementById('s4-fields');
+  if(!cont) return;
+  cont.innerHTML = '';
+  for(let i=0; i<fields.length; i++) {
+    await delay(350 + i*280);
+    const d = document.createElement('div');
+    d.style.cssText = 'opacity:0;transition:.35s;transform:translateY(8px)';
+    d.innerHTML = `<div style="font-size:.6rem;color:rgba(255,255,255,.3);margin-bottom:3px">${fields[i].l}</div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+        border-radius:8px;padding:8px 12px;font-size:.76rem;color:#E2E8F0">${fields[i].v}</div>`;
+    cont.appendChild(d);
+    requestAnimationFrame(() => { d.style.opacity='1'; d.style.transform='none'; });
+  }
+  await delay(1500); showEl('s4-submit');
+  await delay(450);  showEl('s4-arr');
+  const tbody = document.getElementById('s4-tbody');
+  if(!tbody) return;
+  const rows = [
+    ['Priya Patel','Dental Cleaning','✅ Done','rgba(255,255,255,.55)'],
+    ['Amit Verma','Tooth Extraction','✅ Done','rgba(255,255,255,.55)'],
+    ['Rahul Sharma','Root Canal Therapy','⚡ New','var(--cyan)'],
+  ];
+  for(let i=0; i<rows.length; i++) {
+    await delay(250 + i*200);
+    const tr = document.createElement('tr');
+    tr.style.cssText='opacity:0;transition:.35s;border-top:1px solid rgba(255,255,255,.04)';
+    const col = rows[i][3];
+    tr.innerHTML = `<td style="padding:7px 12px;color:${col};font-size:.72rem">${rows[i][0]}</td>
+      <td style="padding:7px 12px;color:${col};font-size:.72rem">${rows[i][1]}</td>
+      <td style="padding:7px 12px;font-size:.68rem;color:${i===2?'var(--cyan)':'#4ADE80'}">${rows[i][2]}</td>`;
+    tbody.appendChild(tr);
+    requestAnimationFrame(() => { tr.style.opacity='1'; });
+  }
+  await delay(700); showEl('s4-trigger');
+};
+
+// S5 — WhatsApp follow-up
+inits[4] = async () => {
+  const b = 's5-body';
+  await addTyping(b, 400);
+  await delay(1300); removeTyping(b);
+  await addMsg(b, 'msg-out', `Hello! 👋 This is <strong>Smile Clinic</strong>.<br><br>
+    We hope you're recovering well from your <strong>Root Canal Therapy</strong> yesterday.<br><br>
+    How are you feeling today?<br>
+    Please reply: ✅ Better &nbsp;/&nbsp; ⚠️ Same &nbsp;/&nbsp; 🆘 Need Help
+    <div class="msg-time">9:00 AM <span class="tick">✓✓</span></div>`);
+  await delay(600); addClass('fn1', 'vis');
+  await delay(500); addClass('fn2', 'vis');
+  await delay(500); addClass('fn3', 'vis');
+};
+
+// S6 — AI analysis
+inits[5] = async () => {
+  const b = 's6-body';
+  await addMsg(b, 'msg-out',
+    `Hello! 👋 How are you feeling after your Root Canal Therapy?
+    <div class="msg-time">9:00 AM <span class="tick">✓✓</span></div>`, 300);
+  await addTyping(b, 900); await delay(1400); removeTyping(b);
+  await addMsg(b, 'msg-in',
+    `Hi! Feeling much better today, thank you! 😊<br>
+    The pain has significantly reduced. Really appreciate the care at Smile Clinic!
+    <div class="msg-time">9:04 AM</div>`);
+  await delay(700);
+  animBar('af1','bp1',100, 200);
+  await delay(500);
+  const l = document.getElementById('ring-lang');
+  if(l) l.textContent = 'Language: English detected ✓';
+  animBar('af2','bp2',94,  400);
+  animRing(97, 600);
+  await delay(700);
+  animBar('af3','bp3',97,  600);
+  await delay(800);
+  const rs = document.getElementById('ring-status');
+  if(rs) rs.textContent = 'POSITIVE — Recovering well';
+  await delay(700);
+  const res = document.getElementById('ai-pos'); if(res) res.classList.add('vis');
+};
+
+// S7 — Positive actions
+inits[6] = async () => {
+  const b = 's7-body';
+  addClass('p1','vis', 200);
+  await addMsg(b,'msg-out',
+    `That's wonderful to hear! 😊<br><br>
+    We're so glad you're recovering well. Remember — if you experience any discomfort, we're just a message away. Your health is our priority! 💙
+    <div class="msg-time">9:04 AM <span class="tick">✓✓</span></div>`, 500);
+  await delay(400); addClass('p2','vis');
+  await delay(400); addClass('p3','vis');
+  await delay(1600);
+  await addMsg(b,'msg-out',
+    `One more thing — your kind words mean the world to us! 🙏<br><br>
+    Would you mind sharing your experience with a <strong>⭐⭐⭐⭐⭐ Google review?</strong><br><br>
+    👉 <span style="color:#60A5FF;text-decoration:underline">g.page/smile-clinic/review</span>
+    <div class="msg-time">9:34 AM <span class="tick">✓✓</span></div>`, 200);
+  await delay(400); addClass('p4','vis');
+};
+
+// S8 — Emergency
+inits[7] = async () => {
+  const pat='s8-pat', doc='s8-doc';
+  await addMsg(pat,'msg-out',
+    `Hello! How are you feeling after your Root Canal Therapy?
+    <div class="msg-time">9:00 AM <span class="tick">✓✓</span></div>`, 300);
+  await addTyping(pat,900); await delay(1400); removeTyping(pat);
+  await addMsg(pat,'msg-in',
+    `Doctor, I'm experiencing <strong>severe facial swelling</strong> and difficulty swallowing. Running a high fever since last night. Very worried...
+    <div class="msg-time">9:06 AM</div>`);
+  await delay(700);
+  await addMsg(pat,'msg-in',
+    `<span style="font-size:.65rem;color:rgba(255,51,85,.7);font-weight:700;
+      font-family:'JetBrains Mono',monospace">
+      🤖 ClinicCare AI: CRITICAL symptoms detected<br>Alerting doctor immediately...</span>`);
+  await delay(500);
+  await addMsg(doc,'msg-in',
+    `<strong style="color:#FCA5A5">🚨 PATIENT ALERT — IMMEDIATE ACTION</strong><br><br>
+    <strong>Patient:</strong> Rahul Sharma<br>
+    <strong>Phone:</strong> +91 98765 43210<br>
+    <strong>Procedure:</strong> Root Canal (2 days ago)<br>
+    <strong>Symptoms:</strong> Severe facial swelling, dysphagia, high fever<br><br>
+    <span style="color:#FCA5A5;font-weight:700">⚠️ Possible post-op infection — see patient immediately</span>
+    <div class="msg-time" style="color:rgba(252,165,165,.4)">9:06 AM · Auto-generated</div>`, 300);
+};
+
+// S9 — Prescription
+inits[8] = async () => {
+  const b = 's9-body';
+  await addTyping(b, 600); await delay(1700); removeTyping(b);
+  await addMsg(b,'msg-out',
+    `Here are your medicine instructions 💊<br><br>
+    <strong>1. Amoxicillin 500mg</strong><br>
+    ➤ 3 times daily, <em>before meals</em><br>
+    ➤ Continue for 5 days ✅<br><br>
+    <strong>2. Ibuprofen 400mg</strong><br>
+    ➤ 2 times daily, <em>after meals</em><br>
+    ➤ 3 days — for pain relief ✅<br><br>
+    <strong>3. Betadine Gargle</strong><br>
+    ➤ 2 times daily, 7 days 🫧<br><br>
+    <em>If pain is severe:</em> Paracetamol 650mg<br><br>
+    Get well soon! 💙 — <strong>Smile Clinic</strong>
+    <div class="msg-time">9:01 AM <span class="tick">✓✓</span></div>`);
+};
+
+// S10 — Dashboard
+inits[9] = () => {
+  ['k1','k2','k3','k4'].forEach((id,i) => addClass(id,'vis', 200+i*150));
+  animCounter('kv1',148,'',400);
+  animCounter('kv2',78,'%',600);
+  animCounter('kv3',42,'',800);
+  animCounter('kv4',3,'',1000);
+  const wrap = document.getElementById('chart-wrap');
+  if(!wrap) return;
+  const vals=[58,74,62,91,85,68,88]; wrap.innerHTML='';
+  vals.forEach((v,i) => {
+    const col = document.createElement('div');
+    col.className='bar-unit';
+    col.innerHTML=`<div class="bar-body" style="height:0;background:linear-gradient(180deg,${i===3?'var(--cyan)':'var(--blue)'},rgba(0,0,0,.3))"></div>
+      <div class="bar-lbl">${v}%</div>`;
+    wrap.appendChild(col);
+    setTimeout(() => {
+      const b=col.querySelector('.bar-body');
+      if(b) b.style.height=(v/100*75)+'px';
+    }, 450+i*110);
+  });
+};
+
+// S11 — Tech stack
+inits[10] = () => {
+  ['tc1','tc2','tc3','tc4','tc5','tc6'].forEach((id,i) => addClass(id,'vis', 180+i*130));
+};
+
+// S12 — Impact
+inits[11] = () => {
+  ['ic1','ic2','ic3','ic4'].forEach((id,i) => addClass(id,'vis', 200+i*200));
+};
+
+// S13 — Outro (no init needed)
+inits[12] = () => {};
+
+/* ── START ── */
+// already visible via CSS .scene.on for s1
+document.getElementById('hud-title').textContent = SCENES[0].title;
+document.getElementById('hud-counter').textContent = '01 / 13';
+document.getElementById('progress-fill').style.width = (1/13*100)+'%';
+startTimer(SCENES[0].dur);
+autoTimer = setTimeout(() => nextScene(), SCENES[0].dur);
+</script>
+</body>
+</html>

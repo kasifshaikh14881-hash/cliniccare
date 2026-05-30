@@ -6,7 +6,7 @@
   "tags": [],
   "blogUrl": "",
   "metadata": {
-    "externalId": "k9RPAuWEF0MZNKAxn80pk"
+    "externalId": "YOUR_WORKFLOW_ID"
   },
   "author": "Kasif Shaikh",
   "categories": [],
@@ -29,14 +29,14 @@
           "valid": true,
           "settings": {
             "input": {
-              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
               "sheetId": 642871757,
               "headerRow": 1,
               "matchCase": false,
               "columnName": "J",
               "searchValue": "positive",
               "numberOfRows": 20,
-              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+              "spreadsheetId": "YOUR_SPREADSHEET_ID",
               "useHeaderNames": false,
               "includeTeamDrives": false
             },
@@ -92,14 +92,14 @@
             "valid": true,
             "settings": {
               "input": {
-                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                 "sheetId": 642871757,
                 "headerRow": 1,
                 "matchCase": false,
                 "columnName": "J",
                 "searchValue": "negative",
                 "numberOfRows": 10,
-                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                 "useHeaderNames": false,
                 "includeTeamDrives": false
               },
@@ -155,14 +155,14 @@
               "valid": true,
               "settings": {
                 "input": {
-                  "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                  "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                   "sheetId": 150180561,
                   "headerRow": 1,
                   "matchCase": false,
                   "columnName": "I",
                   "searchValue": "TRUE",
                   "numberOfRows": 50,
-                  "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                  "spreadsheetId": "YOUR_SPREADSHEET_ID",
                   "useHeaderNames": false,
                   "includeTeamDrives": false
                 },
@@ -268,14 +268,14 @@
                           "valid": true,
                           "settings": {
                             "input": {
-                              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                               "row_id": "{{step_11_neg_prepare['patientRow']}}",
                               "values": {
                                 "Q": "TRUE",
                                 "R": "{{now}}"
                               },
                               "sheetId": 642871757,
-                              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                              "spreadsheetId": "YOUR_SPREADSHEET_ID",
                               "first_row_headers": true,
                               "includeTeamDrives": false
                             },
@@ -639,13 +639,13 @@
                                 "valid": true,
                                 "settings": {
                                   "input": {
-                                    "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                    "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                     "row_id": "{{step_11_neg_prepare['patientRow']}}",
                                     "values": {
                                       "H": "escalated"
                                     },
                                     "sheetId": 642871757,
-                                    "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                    "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                     "first_row_headers": true,
                                     "includeTeamDrives": false
                                   },
@@ -895,13 +895,13 @@
                         "valid": true,
                         "settings": {
                           "input": {
-                            "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                            "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                             "row_id": "{{step_5_pos_prepare['patientRow']}}",
                             "values": {
                               "O": "TRUE"
                             },
                             "sheetId": 642871757,
-                            "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                            "spreadsheetId": "YOUR_SPREADSHEET_ID",
                             "first_row_headers": true,
                             "includeTeamDrives": false
                           },
@@ -1169,14 +1169,14 @@
                             "valid": true,
                             "settings": {
                               "input": {
-                                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                                 "row_id": "{{step_5_pos_prepare['patientRow']}}",
                                 "values": {
                                   "H": "review_requested",
                                   "P": "{{now}}"
                                 },
                                 "sheetId": 642871757,
-                                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                                 "first_row_headers": true,
                                 "includeTeamDrives": false
                               },

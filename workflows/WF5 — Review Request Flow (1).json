@@ -6,7 +6,7 @@
   "tags": [],
   "blogUrl": "",
   "metadata": {
-    "externalId": "KQDKALRgFk8i3fgbrlptd"
+    "externalId": "YOUR_WORKFLOW_ID"
   },
   "author": "Kasif Shaikh",
   "categories": [],
@@ -29,14 +29,14 @@
           "valid": true,
           "settings": {
             "input": {
-              "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+              "auth": "{{connections['YOUR_CONNECTION_ID']}}",
               "sheetId": 642871757,
               "headerRow": 1,
               "matchCase": false,
               "columnName": "H",
               "searchValue": "review_pending",
               "numberOfRows": 20,
-              "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+              "spreadsheetId": "YOUR_SPREADSHEET_ID",
               "useHeaderNames": false,
               "includeTeamDrives": false
             },
@@ -92,14 +92,14 @@
             "valid": true,
             "settings": {
               "input": {
-                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                 "sheetId": 150180561,
                 "headerRow": 1,
                 "matchCase": false,
                 "columnName": "I",
                 "searchValue": "TRUE",
                 "numberOfRows": 50,
-                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                 "useHeaderNames": false,
                 "includeTeamDrives": false
               },
@@ -292,7 +292,7 @@
                         "valid": true,
                         "settings": {
                           "input": {
-                            "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                            "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                             "row_id": "{{step_4_prepare['patientRow']}}",
                             "values": {
                               "H": "review_requested",
@@ -300,7 +300,7 @@
                               "P": "{{now}}"
                             },
                             "sheetId": 642871757,
-                            "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                            "spreadsheetId": "YOUR_SPREADSHEET_ID",
                             "first_row_headers": true,
                             "includeTeamDrives": false
                           },

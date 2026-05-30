@@ -6,7 +6,7 @@
   "tags": [],
   "blogUrl": "",
   "metadata": {
-    "externalId": "XnUrQYugP3runZrgJVHhe"
+    "externalId": "YOUR_WORKFLOW_ID"
   },
   "author": "Kasif Shaikh",
   "categories": [],
@@ -49,14 +49,14 @@
             "valid": true,
             "settings": {
               "input": {
-                "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                 "sheetId": 642871757,
                 "headerRow": 1,
                 "matchCase": false,
                 "columnName": "G",
                 "searchValue": "{{step_1['today']}}",
                 "numberOfRows": 100,
-                "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                "spreadsheetId": "YOUR_SPREADSHEET_ID",
                 "useHeaderNames": false,
                 "includeTeamDrives": false
               },
@@ -128,7 +128,7 @@
                     "valid": true,
                     "settings": {
                       "input": {
-                        "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                        "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                         "values": {
                           "A": "{{step_3['item']['values']['B']}}",
                           "B": "{{step_3['item']['values']['C']}}",
@@ -143,7 +143,7 @@
                         },
                         "sheetId": 1509371895,
                         "as_string": false,
-                        "spreadsheetId": "1o8Izkn_3fdVt7L1lcu44qrm0puOL7ZjRQ0hFhevApAI",
+                        "spreadsheetId": "YOUR_SPREADSHEET_ID",
                         "first_row_headers": true,
                         "includeTeamDrives": false
                       },
@@ -267,13 +267,13 @@
                       "valid": true,
                       "settings": {
                         "input": {
-                          "auth": "{{connections['PLEKyXOfnGyo35lx80Vap']}}",
+                          "auth": "{{connections['YOUR_CONNECTION_ID']}}",
                           "row_id": "{{step_3['item']['row']}}",
                           "values": {
                             "H": "queued"
                           },
                           "sheetId": 1709857547,
-                          "spreadsheetId": "1Rg556hvT0_PwsDrcWgaRkTUaxMEJVJ6ErOX0u9mCIf4",
+                          "spreadsheetId": "YOUR_SPREADSHEET_ID",
                           "first_row_headers": true,
                           "includeTeamDrives": false
                         },
