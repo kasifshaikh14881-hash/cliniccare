@@ -7,7 +7,7 @@
 **An autonomous WhatsApp patient-retention agent for Indian clinics —**
 **reasoning on Microsoft Foundry, grounded by Foundry IQ, running in production.**
 
-[![Demo Video](https://img.shields.io/badge/▶_Watch_the_Demo-2:47_film-ff0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/k3xC4PuFSaM)
+[![Demo Video](https://img.shields.io/badge/▶_Watch_the_Demo-2:58_film-ff0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/DKIyd4jGfOY)
 [![Live System](https://img.shields.io/badge/🌐_Live-cliniccare.ecohavens.store-0078d4?style=for-the-badge)](https://cliniccare.ecohavens.store)
 
 ![Microsoft Foundry](https://img.shields.io/badge/Reasoning-Microsoft_Foundry-0078d4?style=flat-square&logo=microsoftazure&logoColor=white)
@@ -131,7 +131,7 @@ Not a mockup. Real WhatsApp number, real Activepieces runs, real Foundry endpoin
 
 End-to-end: **under 60 seconds.**
 
-▶ **Watch it as a film (2:47):** [youtu.be/k3xC4PuFSaM](https://youtu.be/k3xC4PuFSaM) — problem → live system → grounded reasoning → both patient paths → proof.
+▶ **Watch it as a film (2:58):** [youtu.be/DKIyd4jGfOY](https://youtu.be/DKIyd4jGfOY) — problem → live system → grounded reasoning → both patient paths → proof.
 
 ---
 
@@ -277,7 +277,7 @@ cliniccare/
 |---|---|
 | Multi-step reasoning | Retrieve → ground → reason → score → gate → route ([workflows/](workflows/)) |
 | Reliability & safety | [8 implemented guardrails](#%EF%B8%8F-safety--reliability--by-design-in-code) incl. confidence gate + human-in-loop |
-| Real execution | [Production run table](#%EF%B8%8F-what-actually-ran--verified-end-to-end) + [docs/](docs/) screenshots + [demo film](https://youtu.be/k3xC4PuFSaM) |
+| Real execution | [Production run table](#%EF%B8%8F-what-actually-ran--verified-end-to-end) + [docs/](docs/) screenshots + [demo film](https://youtu.be/DKIyd4jGfOY) |
 | Originality | Vernacular-first (Hinglish) healthcare retention, grounded per-patient triage, ₹0 stack |
 
 ---
